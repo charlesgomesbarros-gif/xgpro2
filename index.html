@@ -409,16 +409,18 @@ for(var ci=0;ci<5;ci++){
 
 async function handleCtx(files, type, idx){
   document.getElementById('ctxload').style.display='block';
-  document.getElementById('ctxlbl').textContent='Analyse '+type+'...';
   document.getElementById('errctx').style.display='none';
   try {
     var results=[];
     for(var i=0;i<files.length;i++){
+      document.getElementById('ctxlbl').textContent='Analyse image '+(i+1)+'/'+files.length+'...';
       var b64=await toB64(files[i]);
       var r=await callAPI(b64,files[i].type||'image/png',type);
       results.push(r);
     }
-    storeCtx(type,results,idx);
+    // Merge ALL results from all files into one combined object
+    var combined=combineAll(results, type);
+    storeCtx(type,[combined],idx);
     updateMem();
     renderCtxPrev();
     renderStTab();
@@ -429,6 +431,45 @@ async function handleCtx(files, type, idx){
     el.style.display='block';
   }
   document.getElementById('ctxload').style.display='none';
+}
+
+function combineAll(results, type){
+  if(!results||!results.length) return {};
+  if(results.length===1) return results[0];
+  var base=Object.assign({}, results[0]);
+  // Merge teams
+  if(type==='standings'){
+    var seen={};
+    var allTeams=[];
+    results.forEach(function(r){
+      (r.teams||[]).forEach(function(t){
+        var key=(t.name||'').toLowerCase().trim();
+        if(!seen[key]){seen[key]=true;allTeams.push(t);}
+      });
+    });
+    allTeams.sort(function(a,b){return (a.rank||99)-(b.rank||99);});
+    base.teams=allTeams;
+  }
+  // Merge players
+  if(type==='topscorers'){
+    var seenP={};
+    var allP=[];
+    results.forEach(function(r){
+      (r.players||[]).forEach(function(p){
+        var key=(p.name||'').toLowerCase().trim();
+        if(!seenP[key]){seenP[key]=true;allP.push(p);}
+      });
+    });
+    allP.sort(function(a,b){return (a.rank||99)-(b.rank||99);});
+    base.players=allP;
+  }
+  // Merge matches
+  if(type==='h2h'){
+    var allM=[];
+    results.forEach(function(r){allM=allM.concat(r.matches||[]);});
+    base.matches=allM;
+  }
+  return base;
 }
 
 function mergeCtxResults(results){
