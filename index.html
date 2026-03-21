@@ -431,19 +431,88 @@ async function handleCtx(files, type, idx){
   document.getElementById('ctxload').style.display='none';
 }
 
+function mergeCtxResults(results){
+  if(!results||!results.length) return null;
+  if(results.length===1) return results[0];
+  var base=Object.assign({},results[0]);
+  // Merge teams arrays (standings)
+  if(base.teams){
+    var allTeams=[];
+    var seen={};
+    results.forEach(function(r){
+      (r.teams||[]).forEach(function(t){
+        var key=(t.name||'').toLowerCase();
+        if(!seen[key]){seen[key]=true;allTeams.push(t);}
+      });
+    });
+    allTeams.sort(function(a,b){return (a.rank||99)-(b.rank||99);});
+    base.teams=allTeams;
+  }
+  // Merge players arrays (topscorers)
+  if(base.players){
+    var allPlayers=[];
+    var seenP={};
+    results.forEach(function(r){
+      (r.players||[]).forEach(function(p){
+        var key=(p.name||'').toLowerCase();
+        if(!seen[key]){seenP[key]=true;allPlayers.push(p);}
+      });
+    });
+    allPlayers.sort(function(a,b){return (a.rank||99)-(b.rank||99);});
+    base.players=allPlayers;
+  }
+  // Merge matches (h2h)
+  if(base.matches){
+    var allMatches=[];
+    results.forEach(function(r){allMatches=allMatches.concat(r.matches||[]);});
+    base.matches=allMatches;
+  }
+  return base;
+}
+
 function storeCtx(type,results,idx){
-  var merged=results.length===1?results[0]:results[0];
-  if(type==='standings')    MEM.st=merged;
-  if(type==='topscorers')   MEM.sc=merged;
-  if(type==='lineup-home')  MEM.lh=merged;
-  if(type==='lineup-away')  MEM.la=merged;
-  if(type==='h2h')          MEM.h2h=merged;
+  var newData=mergeCtxResults(results);
+  // MERGE with existing memory instead of replacing
+  if(type==='standings'){
+    if(MEM.st&&MEM.st.teams&&newData.teams){
+      var seen={};
+      var combined=[];
+      MEM.st.teams.concat(newData.teams).forEach(function(t){
+        var key=(t.name||'').toLowerCase();
+        if(!seen[key]){seen[key]=true;combined.push(t);}
+      });
+      combined.sort(function(a,b){return (a.rank||99)-(b.rank||99);});
+      newData.teams=combined;
+    }
+    MEM.st=newData;
+  }
+  else if(type==='topscorers'){
+    if(MEM.sc&&MEM.sc.players&&newData.players){
+      var seenP={};
+      var combinedP=[];
+      MEM.sc.players.concat(newData.players).forEach(function(p){
+        var key=(p.name||'').toLowerCase();
+        if(!seenP[key]){seenP[key]=true;combinedP.push(p);}
+      });
+      combinedP.sort(function(a,b){return (a.rank||99)-(b.rank||99);});
+      newData.players=combinedP;
+    }
+    MEM.sc=newData;
+  }
+  else if(type==='lineup-home') MEM.lh=newData;
+  else if(type==='lineup-away') MEM.la=newData;
+  else if(type==='h2h'){
+    if(MEM.h2h&&MEM.h2h.matches&&newData.matches){
+      newData.matches=MEM.h2h.matches.concat(newData.matches);
+    }
+    MEM.h2h=newData;
+  }
   var cb=document.getElementById('cub'+idx);
   var cs=document.getElementById('cus'+idx);
   if(cb) cb.className='cubtn ld';
   if(cs){
-    if(type==='standings'&&merged.teams) cs.textContent=merged.teams.length+' equipes';
-    else if(type==='topscorers'&&merged.players) cs.textContent=merged.players.length+' joueurs';
+    if(type==='standings'&&MEM.st&&MEM.st.teams) cs.textContent=MEM.st.teams.length+' equipes';
+    else if(type==='topscorers'&&MEM.sc&&MEM.sc.players) cs.textContent=MEM.sc.players.length+' joueurs';
     else cs.textContent='Charge';
   }
 }
