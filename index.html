@@ -237,6 +237,10 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(42px,7vw,78px);letter-spa
 </head>
 <body>
 <script>
+function handleCtxUpload(input, type) {
+  // delegate to main handler defined later
+  if (window._handleCtxUpload) window._handleCtxUpload(input, type);
+}
 function showTab(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -530,7 +534,7 @@ function updateAnalyzeBtn() {
 // ══════════════════════════════════════
 //  CONTEXT UPLOADS
 // ══════════════════════════════════════
-async function handleCtxUpload(input, type) {
+window._handleCtxUpload = async function(input, type) {
   if (!input.files?.length) return;
   const files = [...input.files];
 
@@ -776,7 +780,7 @@ function renderCtxPreview() {
         <div class="scorers-box fin">
           ${MEM.topScorers.players.slice(0,10).map((p,i) => `
             <div class="sc-item">
-              <div class="sc-rank ${['r1','r2','r3','r4','r5','r6','r7','r8','r8','r8'][i]}">${i+1}</div>
+              <div class="sc-rank ${i===0?'r1':i===1?'r2':i===2?'r3':'r8'}">${i+1}</div>
               <div class="sc-inf">
                 <div class="sc-nm">${p.name||'—'} <span class="tbdg" style="background:rgba(124,58,237,.15);color:#c4b5fd;">${p.team||''}</span></div>
                 <div class="sc-sub">${p.goals||0}⚽ · ${p.apps||0} matchs${p.xG?' · xG '+p.xG:''}</div>
@@ -842,7 +846,7 @@ function renderScorersTab() {
         const cls = pct>=40?'hc':pct>=20?'mc':'lc';
         const fcls= pct>=40?'fh':pct>=20?'fm':'fl';
         return `<div class="sc-item">
-          <div class="sc-rank ${(['r1','r2','r3','r4','r5','r6','r7','r8','r8','r8'])[i]||'r8'}">${i+1}</div>
+          <div class="sc-rank ${i===0?'r1':i===1?'r2':i===2?'r3':'r8'}">${i+1}</div>
           <div class="sc-inf">
             <div class="sc-nm">${p.name||'—'} <span class="tbdg" style="background:rgba(124,58,237,.15);color:#c4b5fd;">${p.team||''}</span></div>
             <div class="sc-sub">${p.goals||0}⚽ · ${p.assists||0}🎯 · ${p.apps||0} matchs${p.xG?' · xG '+p.xG:''}</div>
@@ -1108,16 +1112,19 @@ function renderReport(d) {
       const cls=pct>=50?'hc':pct>=25?'mc':'lc';
       const fcls=pct>=50?'fh':pct>=25?'fm':'fl';
       const sideLabel=s._side==='home'?`<span class="tbdg hbdg">${d.home_team}</span>`:`<span class="tbdg abdg">${d.away_team}</span>`;
-      const ranks=['r1','r2','r3','r4','r5','r6','r7','r8'];
-      const rankCls=ranks[i]||'r8';
-      return `<div class="sc-item">
-        <div class="sc-rank ${rankCls}">${i+1}</div>
-        <div class="sc-inf">
-          <div class="sc-nm">${s.name||'—'} ${sideLabel}</div>
-          <div class="sc-sub">${s.goals||0}⚽ · xG ${s.xG?s.xG.toFixed?.(2):s.xG:'—'} · ${s.apps||0} matchs</div>
-        </div>
-        <div class="sc-p"><div class="sc-pv ${cls}">${pct}%</div><div class="sc-pb"><div class="sc-pf ${fcls}" style="width:${pct}%"></div></div></div>
-      </div>`;
+      const ranks2=['r1','r2','r3','r4','r5','r6','r7','r8'];
+      const rankCls2=ranks2[i]||'r8';
+      const xgVal = s.xG ? (typeof s.xG.toFixed === 'function' ? s.xG.toFixed(2) : s.xG) : '—';
+      const html = '<div class="sc-item">'
+        + '<div class="sc-rank ' + rankCls2 + '">' + (i+1) + '</div>'
+        + '<div class="sc-inf">'
+        + '<div class="sc-nm">' + (s.name||'—') + ' ' + sideLabel + '</div>'
+        + '<div class="sc-sub">' + (s.goals||0) + '⚽ · xG ' + xgVal + ' · ' + (s.apps||0) + ' matchs</div>'
+        + '</div>'
+        + '<div class="sc-p"><div class="sc-pv ' + cls + '">' + pct + '%</div>'
+        + '<div class="sc-pb"><div class="sc-pf ' + fcls + '" style="width:' + pct + '%"></div></div></div>'
+        + '</div>';
+      return html;
     }).join('');
   } else {
     document.getElementById('scorersBox').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px;">Uploade des pages joueurs Understat ou le top buteurs dans l\'onglet Données</div>';
