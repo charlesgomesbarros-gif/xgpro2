@@ -276,11 +276,11 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(42px,7vw,78px);letter-spa
 </div>
 
 <!-- TABS -->
-<div class="tabs">
-  <button class="tab active" onclick="showTab('analyze',this)">⚡ Analyse</button>
-  <button class="tab" onclick="showTab('context',this)">📦 Données</button>
-  <button class="tab" onclick="showTab('standings',this)">🏆 Classement</button>
-  <button class="tab" onclick="showTab('scorers',this)">⚽ Buteurs</button>
+<div class="tabs" id="tabBar">
+  <button class="tab active" id="tab-btn-analyze">⚡ Analyse</button>
+  <button class="tab" id="tab-btn-context">📦 Données</button>
+  <button class="tab" id="tab-btn-standings">🏆 Classement</button>
+  <button class="tab" id="tab-btn-scorers">⚽ Buteurs</button>
 </div>
 
 <!-- ══════════════════════════════════════ -->
@@ -455,12 +455,21 @@ function resetMemory() {
 // ══════════════════════════════════════
 //  TABS
 // ══════════════════════════════════════
-function showTab(id, btn) {
+function showTab(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
-  btn.classList.add('active');
+  document.getElementById('tab-btn-' + id).classList.add('active');
 }
+
+// Init tab buttons
+['analyze','context','standings','scorers'].forEach(id => {
+  const btn = document.getElementById('tab-btn-' + id);
+  if (btn) {
+    btn.addEventListener('click', () => showTab(id));
+    btn.addEventListener('touchend', (e) => { e.preventDefault(); showTab(id); });
+  }
+});
 
 // ══════════════════════════════════════
 //  FILE HANDLING — match analysis
@@ -679,7 +688,7 @@ function hideMissingAlert() {
 }
 
 function triggerCtxUpload(type) {
-  showTab('context', document.querySelectorAll('.tab')[1]);
+  showTab('context');
   setTimeout(() => {
     const el = document.querySelector(`#ctx-${type} input[type=file]`);
     if (el) el.click();
