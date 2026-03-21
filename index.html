@@ -27,7 +27,7 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(42px,7vw,78px);letter-spa
 /* TABS */
 .tabs{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:4px;margin-bottom:18px;overflow-x:auto;gap:2px;scrollbar-width:none;}
 .tabs::-webkit-scrollbar{display:none;}
-.tab{flex:1;min-width:72px;padding:9px 6px;border-radius:11px;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;transition:all .2s;background:transparent;color:var(--muted);white-space:nowrap;text-align:center;}
+.tab{flex:1;min-width:72px;padding:9px 6px;border-radius:11px;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;transition:all .2s;background:transparent;color:var(--muted);white-space:nowrap;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;}
 .tab.active{background:linear-gradient(135deg,var(--accent2),#5b21b6);color:#fff;box-shadow:0 4px 14px rgba(124,58,237,.35);}
 .panel{display:none;}
 .panel.active{display:block;}
@@ -277,10 +277,10 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(42px,7vw,78px);letter-spa
 
 <!-- TABS -->
 <div class="tabs" id="tabBar">
-  <button class="tab active" id="tab-btn-analyze">⚡ Analyse</button>
-  <button class="tab" id="tab-btn-context">📦 Données</button>
-  <button class="tab" id="tab-btn-standings">🏆 Classement</button>
-  <button class="tab" id="tab-btn-scorers">⚽ Buteurs</button>
+  <a class="tab active" id="tab-btn-analyze" href="javascript:void(0)" onclick="showTab('analyze')">⚡ Analyse</a>
+  <a class="tab" id="tab-btn-context" href="javascript:void(0)" onclick="showTab('context')">📦 Données</a>
+  <a class="tab" id="tab-btn-standings" href="javascript:void(0)" onclick="showTab('standings')">🏆 Classement</a>
+  <a class="tab" id="tab-btn-scorers" href="javascript:void(0)" onclick="showTab('scorers')">⚽ Buteurs</a>
 </div>
 
 <!-- ══════════════════════════════════════ -->
