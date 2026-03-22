@@ -1556,11 +1556,35 @@ function renderReport(d){
     +bchip('🔥','OVER 4.5',b45)
     +bchip('🫂','BTTS',b.btts)
     +'</div>'+h2hhtml;
-  // AI TIPSTER
-  var txt=d.analysis||'';
-  if(d.vbet&&txt.indexOf('Value Bet')<0) txt+='\nValue Bet: '+d.vbet;
+  // AI TIPSTER - Call /api/tipster with full match data for coherent analysis
+  document.getElementById('aibox').style.display='block';
+  document.getElementById('aitx').innerHTML='<div style="color:var(--mt);font-size:12px;font-family:DM Mono,monospace;animation:blink 1.5s infinite;letter-spacing:2px;">ANALYSE EN COURS...</div>';
+
+  (async function(){
+    var txt=d.analysis||'';
+    if(d.vbet&&txt.indexOf('Value Bet')<0) txt+='\nValue Bet: '+d.vbet;
+    try {
+      var resp=await fetch('/api/tipster',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({matchData:{
+          ht:d.ht, at:d.at,
+          hxg:d.hxg, axg:d.axg,
+          hxga:d.hxga, axga:d.axga,
+          hr:d.hr, ar:d.ar,
+          adjXgH:d.adjXgH, adjXgA:d.adjXgA,
+          hstand:d.hstand, astand:d.astand,
+          bets:d.bets
+        }})
+      });
+      var data2=await resp.json();
+      if(data2.analysis) txt=data2.analysis;
+    } catch(e){}
+    renderAITipster(txt);
+  })();
+
+  function renderAITipster(txt){
   if(txt){
-    document.getElementById('aibox').style.display='block';
     // Parse tipster format and render with colors
     var lines=txt.split('\n');
     var html='';
@@ -1597,7 +1621,7 @@ function renderReport(d){
       }
     });
     document.getElementById('aitx').innerHTML=html;
-  }
+  }} // end renderAITipster + if(txt)
 
   // AUTO EXPLANATION BOX
   var expHtml = '<div style="background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:15px;margin-top:12px;">';
