@@ -948,8 +948,12 @@ function buildMatchData(hm,am,hn,an,odds){
       var atf2=d.at.toLowerCase().split(' ')[0];
       lg.scorers.forEach(function(p){
         var pt=(p.team||'').toLowerCase();
-        // Use xG90 if available, else xG/apps, capped at 75%
-        var xg90 = p.xG90 ? parseFloat(p.xG90) : (p.xG && p.apps ? parseFloat(p.xG)/p.apps : 0);
+        // xG90 = expected goals per 90 minutes = best predictor
+        var xg90 = p.xG90 ? parseFloat(p.xG90) : 0;
+        // Fallback: xG total / apps
+        if(!xg90 && p.xG && p.apps) xg90 = parseFloat(p.xG) / parseFloat(p.apps);
+        // Convert xG90 to % probability of scoring in ONE match
+        // xG90=0.42 means 42% chance per 90min match
         var pct2 = Math.min(Math.round(xg90 * 100), 75);
         if(pt.includes(htf2))d.lgScorers.push(Object.assign({},p,{_sd:'h',score_probability:pct2}));
         if(pt.includes(atf2))d.lgScorers.push(Object.assign({},p,{_sd:'a',score_probability:pct2}));
@@ -957,8 +961,19 @@ function buildMatchData(hm,am,hn,an,odds){
     }
   });
   // Build scorers list
-  var hs=(hm?hm.top_scorers||[]:[]).map(function(s){return Object.assign({},s,{_sd:'h'});});
-  var as2=(am?am.top_scorers||[]:[]).map(function(s){return Object.assign({},s,{_sd:'a'});});
+  function calcScorePct(s){
+    var xg90 = s.xG90 ? parseFloat(s.xG90) : 0;
+    if(!xg90 && s.xG && s.apps) xg90 = parseFloat(s.xG) / parseFloat(s.apps);
+    return Math.min(Math.round(xg90 * 100), 75);
+  }
+  var hs=(hm?hm.top_scorers||[]:[]).map(function(s){
+    var pct=calcScorePct(s);
+    return Object.assign({},s,{_sd:'h',score_probability:pct||s.score_probability||0});
+  });
+  var as2=(am?am.top_scorers||[]:[]).map(function(s){
+    var pct=calcScorePct(s);
+    return Object.assign({},s,{_sd:'a',score_probability:pct||s.score_probability||0});
+  });
   var sm={};
   hs.concat(as2).concat(d.lgScorers||[]).forEach(function(s){
     if(s&&s.name&&(!sm[s.name]||(s.score_probability||0)>(sm[s.name].score_probability||0)))sm[s.name]=s;
