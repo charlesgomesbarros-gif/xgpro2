@@ -344,6 +344,16 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
         <div class="cubi">🔄</div><div class="cubl">H2H</div>
         <div class="cubs" id="cus4">Non charge</div><div class="cuck">✓</div>
       </div>
+      <input type="file" accept="image/*" multiple style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;" id="cui5">
+      <input type="file" accept="image/*" multiple style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;" id="cui6">
+      <div class="cubtn" id="cub5" onclick="document.getElementById('cui5').click()">
+        <div class="cubi">📅</div><div class="cubl">Forme DOM</div>
+        <div class="cubs" id="cus5">5 derniers matchs</div><div class="cuck">✓</div>
+      </div>
+      <div class="cubtn" id="cub6" onclick="document.getElementById('cui6').click()">
+        <div class="cubi">📅</div><div class="cubl">Forme EXT</div>
+        <div class="cubs" id="cus6">5 derniers matchs</div><div class="cuck">✓</div>
+      </div>
     </div>
     <div class="iload" id="ctxload"><div class="ispin"></div><div class="ilbl" id="ctxlbl">ANALYSE...</div></div>
     <div class="err" id="errctx"></div>
@@ -398,7 +408,7 @@ function loadMEM(){
       return parsed;
     }
   }catch(e){}
-  return {leagues:{},match:{lh:null,la:null,h2h:null,hxg:null,axg:null}};
+  return {leagues:{},match:{lh:null,la:null,h2h:null,hxg:null,axg:null,formHome:null,formAway:null}};
 }
 function saveMEM(){
   try{
@@ -571,8 +581,8 @@ function renderThumbs(arr,thumbId){
 // ═══════════════════════════════════
 //  CTX UPLOADS
 // ═══════════════════════════════════
-var ctxTypes=['standings','topscorers','lineup-home','lineup-away','h2h'];
-for(var ci=0;ci<5;ci++){
+var ctxTypes=['standings','topscorers','lineup-home','lineup-away','h2h','lastgames-home','lastgames-away'];
+for(var ci=0;ci<7;ci++){
   (function(idx){
     var inp=document.getElementById('cui'+idx);
     if(!inp)return;
@@ -658,6 +668,8 @@ async function handleCtx(files,type,idx){
     }
     if(type==='lineup-home') MEM.match.lh=combined;
     if(type==='lineup-away') MEM.match.la=combined;
+    if(type==='lastgames-home') MEM.match.formHome=combined;
+    if(type==='lastgames-away') MEM.match.formAway=combined;
     if(type==='h2h'){
       var allM=(MEM.match.h2h?MEM.match.h2h.matches||[]:[]).concat(combined.matches||[]);
       MEM.match.h2h={matches:allM};
@@ -1002,14 +1014,63 @@ function calcValue(xgProb, odd){
 }
 
 // Poisson approximation for over/btts
+// Weighted average (recent matches weighted more)
+function weightedAvg(arr){
+  if(!arr||!arr.length) return null;
+  var weights=[1,1.2,1.5,1.8,2];
+  var vals=arr.slice(-5);
+  var wsum=0, vsum=0;
+  vals.forEach(function(v,i){
+    var w=weights[i+(5-vals.length)]||1;
+    vsum+=v*w; wsum+=w;
+  });
+  return vsum/wsum;
+}
+
+// Extract recent xG arrays from form data
+function getFormXG(formData){
+  if(!formData||!formData.matches) return null;
+  return formData.matches.slice(-5).map(function(m){return parseFloat(m.xG||m.xg||0)||0;});
+}
+function getFormXGA(formData){
+  if(!formData||!formData.matches) return null;
+  return formData.matches.slice(-5).map(function(m){return parseFloat(m.xGA||m.xga||0)||0;});
+}
+
 function poissonOver25(lambda){
   // P(goals > 2) = 1 - P(0) - P(1) - P(2)
   var e=Math.exp(-lambda);
   return Math.round((1 - e - lambda*e - lambda*lambda*e/2)*100);
 }
 
+function factorial(n){return n<=1?1:n*factorial(n-1);}
+function poissonOver35(lam){var e=Math.exp(-lam);var p=e*(1+lam+lam*lam/2+lam*lam*lam/6);return Math.round((1-p)*100);}
+function poissonOver45(lam){var e=Math.exp(-lam);var p=e*(1+lam+lam*lam/2+lam*lam*lam/6+Math.pow(lam,4)/24);return Math.round((1-p)*100);}
 function computeBets(d){
-  var hxg=d.hxg||0, axg=d.axg||0, tot=hxg+axg;
+  var hxg=d.hxg||0, axg=d.axg||0;
+
+  // --- FORM ADJUSTMENT ---
+  var formH=MEM.match.formHome, formA=MEM.match.formAway;
+  var formXgH=getFormXG(formH), formXgaH=getFormXGA(formH);
+  var formXgA=getFormXG(formA), formXgaA=getFormXGA(formA);
+
+  var wFormXgH=weightedAvg(formXgH), wFormXgaH=weightedAvg(formXgaH);
+  var wFormXgA=weightedAvg(formXgA), wFormXgaA=weightedAvg(formXgaA);
+
+  // Adjusted xG: 60% recent form + 40% season average
+  var adjXgH  = wFormXgH  ? (wFormXgH*0.6  + hxg*0.4)  : hxg;
+  var adjXgaH = wFormXgaH ? (wFormXgaH*0.6 + (d.hxga||1.2)*0.4) : (d.hxga||hxg*0.9);
+  var adjXgA  = wFormXgA  ? (wFormXgA*0.6  + axg*0.4)  : axg;
+  var adjXgaA = wFormXgaA ? (wFormXgaA*0.6 + (d.axga||1.2)*0.4) : (d.axga||axg*0.9);
+
+  d.adjXgH=Math.round(adjXgH*100)/100;
+  d.adjXgA=Math.round(adjXgA*100)/100;
+  d.hasForm=!!(wFormXgH||wFormXgA);
+
+  // --- MATCHUP: cross attack vs defense ---
+  var attackH=(adjXgH + adjXgaA)/2;
+  var attackA=(adjXgA + adjXgaH)/2;
+  var tot=attackH+attackA;
   var odds=d.odds||{};
   var b={};
 
@@ -1046,6 +1107,24 @@ function computeBets(d){
   b.hw={pct:hWinProb, r:d.ht+' WIN: '+hWinProb+'%'+oddsInfo(hVal,odds.home)};
   b.aw={pct:aWinProb, r:d.at+' WIN: '+aWinProb+'%'+oddsInfo(aVal,odds.away)};
   b.draw={pct:drawProb, r:'NUL: '+drawProb+'%'+oddsInfo(dVal,odds.draw)};
+
+  // --- EXACT SCORES (Poisson bidimensional) ---
+  b.exactScores=[];
+  var scMap={};
+  for(var gi=0;gi<6;gi++){
+    for(var gj=0;gj<6;gj++){
+      var ph=Math.pow(attackH,gi)*Math.exp(-attackH)/factorial(gi);
+      var pa=Math.pow(attackA,gj)*Math.exp(-attackA)/factorial(gj);
+      scMap[gi+'-'+gj]=Math.round(ph*pa*10000)/100;
+    }
+  }
+  var scArr=Object.keys(scMap).map(function(k){return {score:k,pct:scMap[k]};});
+  scArr.sort(function(a,b2){return b2.pct-a.pct;});
+  b.exactScores=scArr.slice(0,5);
+
+  // Over 3.5 and 4.5
+  b.over35pct=poissonOver35(tot);
+  b.over45pct=poissonOver45(tot);
 
   // Value bets
   b.values=[];
@@ -1172,6 +1251,39 @@ function renderReport(d){
     });
     h2hhtml+='</div>';
   }
+  // Exact scores
+  var exactHtml='';
+  if(b.exactScores&&b.exactScores.length){
+    exactHtml='<div style="background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:14px;margin-bottom:12px;">';
+    exactHtml+='<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Scores probables</div>';
+    exactHtml+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">';
+    b.exactScores.forEach(function(s,i){
+      var col=i===0?'var(--ac)':i===1?'var(--gd)':'var(--mt)';
+      exactHtml+='<div style="background:var(--sf2);border-radius:10px;padding:10px 14px;text-align:center;flex:1;min-width:70px;">';
+      exactHtml+='<div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:'+col+';">'+s.score+'</div>';
+      exactHtml+='<div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;">'+s.pct+'%</div>';
+      exactHtml+='</div>';
+    });
+    exactHtml+='</div>';
+    exactHtml+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+    var overs=[
+      {label:'OVER 2.5',pct:b.over?b.over.pct:0},
+      {label:'OVER 3.5',pct:b.over35pct||0},
+      {label:'OVER 4.5',pct:b.over45pct||0},
+    ];
+    overs.forEach(function(o){
+      var col=o.pct>=65?'var(--gr)':o.pct>=45?'var(--gd)':'var(--mt)';
+      exactHtml+='<div style="background:var(--sf2);border-radius:8px;padding:7px 12px;flex:1;text-align:center;">';
+      exactHtml+='<div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:2px;">'+o.label+'</div>';
+      exactHtml+='<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:'+col+';">'+o.pct+'%</div>';
+      exactHtml+='</div>';
+    });
+    exactHtml+='</div>';
+    if(b.hasForm) exactHtml+='<div style="font-size:10px;color:var(--gr);font-family:DM Mono,monospace;margin-top:8px;">Forme recente integree (moyenne ponderee 5 matchs)</div>';
+    else exactHtml+='<div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:8px;">Upload Forme DOM/EXT dans Donnees pour affiner</div>';
+    exactHtml+='</div>';
+  }
+
   // Value bets banner
   var valueHtml='';
   if(b.values&&b.values.length){
@@ -1210,7 +1322,7 @@ function renderReport(d){
     });
     probaHtml+='</div></div>';
   }
-  document.getElementById('betsbox').innerHTML=bbhtml+probaHtml+valueHtml
+  document.getElementById('betsbox').innerHTML=exactHtml+bbhtml+probaHtml+valueHtml
     +'<div class="brow">'
     +bchip('🏠',d.ht+' WIN',b.hw)
     +bchip('🤝','NUL',b.draw)
