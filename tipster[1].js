@@ -49,16 +49,19 @@ ${b.exactScores ? b.exactScores.map(s => s.score+' ('+s.pct+'%)').join(' | ') : 
 ${d.hstand ? d.ht+' : '+d.hstand.rank+'e - '+d.hstand.points+'pts' : ''}
 ${d.astand ? d.at+' : '+d.astand.rank+'e - '+d.astand.points+'pts' : ''}
 
-IMPORTANT : Ton analyse doit etre COHERENTE avec les probabilites ci-dessus.
-Si DOM=38% et EXT=37%, ne dis pas que DOM est largement favori.
-Si une value bet est detectee avec edge > 10%, mets-la en avant.
-Si le signal est "NO BET", dis-le clairement.
+REGLES STRICTES - RESPECTE-LES TOUTES :
+1. La confiance doit refleter l ecart entre les equipes : si les probas sont proches (ex 38% vs 37%), confiance MAX 5/10
+2. Value Bet = UNIQUEMENT les paris avec edge positif dans les donnees. S il y a un edge +18% sur EXT, recommande EXT.
+3. Ne jamais recommander un pari ET le mettre en "A eviter" en meme temps - c est contradictoire
+4. "A eviter" = le pari avec edge NEGATIF le plus eleve
+5. Si aucune cote n est entree, base-toi uniquement sur les probabilites Poisson
+6. Ne jamais mentionner "Under 2.5" ET "Over 2.5" comme bons paris en meme temps
 
-Reponds UNIQUEMENT avec ce format exact (remplace les crochets) :
-Analyse : [2-3 phrases sur dynamique des equipes ET coherentes avec les probas ci-dessus]
-Value Bet : [pari le plus logique selon les probas ET edges, ou NON si aucun signal]
-Confiance : [X/10 coherent avec les probas - si 38% vs 37% max 5/10]
-A eviter : [pari contre-indique selon les stats]`;
+Reponds UNIQUEMENT avec ce format exact sur 4 lignes :
+Analyse : [2-3 phrases coherentes avec les probas - si match serre dis-le]
+Value Bet : [pari avec meilleur edge OU signal le plus fort - un seul pari clair]
+Confiance : [X/10 - base sur l ecart entre probas et edge]
+A eviter : [pari different du Value Bet avec edge negatif ou probabilite faible]`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
