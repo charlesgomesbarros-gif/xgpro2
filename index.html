@@ -12,31 +12,31 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;min-h
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.02) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0;}
 .wrap{max-width:960px;margin:0 auto;padding:0 16px;position:relative;z-index:1;}
 .hdr{padding:22px 0 16px;text-align:center;}
-.badge{display:inline-flex;align-items:center;gap:7px;background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.15);border-radius:100px;padding:5px 16px;font-family:'DM Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:10px;}
+.badge{display:inline-flex;align-items:center;gap:7px;background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.15);border-radius:100px;padding:5px 16px;font-family:DM Mono,monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:10px;}
 .bdot{width:6px;height:6px;background:var(--ac);border-radius:50%;animation:pulse 2s infinite;}
-h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,7vw,76px);letter-spacing:5px;line-height:.9;background:linear-gradient(135deg,#fff 20%,var(--gd) 60%,var(--ac) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spacing:5px;line-height:.9;background:linear-gradient(135deg,#fff 20%,var(--gd) 60%,var(--ac) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .tagline{margin-top:7px;color:var(--mt);font-size:12px;}
 
 /* MAIN TABS */
 .tabs{display:flex;background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:4px;margin-bottom:16px;overflow-x:auto;gap:2px;scrollbar-width:none;}
 .tabs::-webkit-scrollbar{display:none;}
-.tab{flex:1;min-width:70px;padding:9px 6px;border-radius:11px;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;transition:all .2s;background:transparent;color:var(--mt);white-space:nowrap;text-align:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.tab{flex:1;min-width:70px;padding:9px 6px;border-radius:11px;border:none;cursor:pointer;font-family:DM Mono,monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;transition:all .2s;background:transparent;color:var(--mt);white-space:nowrap;text-align:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 .tab.on{background:linear-gradient(135deg,var(--ac2),#5b21b6);color:#fff;box-shadow:0 4px 14px rgba(124,58,237,.35);}
 .panel{display:none;}.panel.on{display:block;}
 
 /* LEAGUE TABS (secondary) */
 .league-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
-.league-tab{padding:7px 14px;background:var(--sf);border:1px solid var(--bd);border-radius:10px;color:var(--mt);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s;letter-spacing:1px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.league-tab{padding:7px 14px;background:var(--sf);border:1px solid var(--bd);border-radius:10px;color:var(--mt);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;transition:all .2s;letter-spacing:1px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 .league-tab.on{border-color:var(--ac);color:var(--ac);background:rgba(0,229,255,.08);}
 .league-tab .lgt-del{margin-left:6px;color:var(--rd);font-size:12px;opacity:.6;}
 .league-tab .lgt-del:hover{opacity:1;}
-.btn-add-league{padding:7px 14px;background:rgba(0,229,255,.07);border:1px dashed rgba(0,229,255,.25);border-radius:10px;color:var(--ac);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.btn-add-league{padding:7px 14px;background:rgba(0,229,255,.07);border:1px dashed rgba(0,229,255,.25);border-radius:10px;color:var(--ac);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
 .btn-add-league:hover{background:rgba(0,229,255,.12);}
 
 /* ADD LEAGUE MODAL */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;padding:20px;}
 .modal-box{background:var(--sf);border:1px solid var(--bd);border-radius:18px;padding:22px;max-width:400px;width:100%;}
-.modal-ttl{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--ac);margin-bottom:14px;}
+.modal-ttl{font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:2px;color:var(--ac);margin-bottom:14px;}
 .modal-input{width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:12px;}
 .modal-input:focus{border-color:var(--ac);}
 .modal-btns{display:flex;gap:10px;}
@@ -45,11 +45,11 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,7vw,76px);letter-spa
 
 /* MEMORY BAR */
 .mem{background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:11px 14px;margin-bottom:14px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
-.mt-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--mt);letter-spacing:1px;}
-.mc{padding:3px 9px;border-radius:100px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;}
+.mt-lbl{font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:1px;}
+.mc{padding:3px 9px;border-radius:100px;font-family:DM Mono,monospace;font-size:10px;letter-spacing:1px;}
 .mc.empty{background:rgba(255,255,255,.03);border:1px solid var(--bd);color:var(--mt);}
 .mc.full{border:1px solid rgba(34,211,165,.3);background:rgba(34,211,165,.1);color:var(--gr);}
-.mrst{margin-left:auto;padding:4px 11px;background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.25);border-radius:8px;color:var(--rd);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.mrst{margin-left:auto;padding:4px 11px;background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.25);border-radius:8px;color:var(--rd);font-family:DM Mono,monospace;font-size:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 
 /* UPLOAD AREA */
 .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
@@ -83,29 +83,29 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,7vw,76px);letter-spa
 .pgw{display:none;background:var(--sf);border-radius:12px;padding:12px 15px;margin-bottom:13px;}
 .pgt{height:4px;background:rgba(255,255,255,.05);border-radius:2px;margin-bottom:6px;}
 .pgf{height:100%;background:linear-gradient(90deg,var(--ac2),var(--ac));border-radius:2px;transition:width .4s ease;width:0%;}
-.pgl{font-family:'DM Mono',monospace;font-size:11px;color:var(--mt);text-align:center;}
+.pgl{font-family:DM Mono,monospace;font-size:11px;color:var(--mt);text-align:center;}
 
 /* REPORT */
 .rep{display:none;}
-.sec{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;color:var(--ac2);margin-bottom:11px;}
+.sec{font-family:Bebas Neue,sans-serif;font-size:17px;letter-spacing:2px;color:var(--ac2);margin-bottom:11px;}
 .mhdr{background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:16px;text-align:center;margin-bottom:12px;}
-.mvs{font-family:'Bebas Neue',sans-serif;font-size:clamp(18px,4vw,30px);letter-spacing:3px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;}
+.mvs{font-family:Bebas Neue,sans-serif;font-size:clamp(18px,4vw,30px);letter-spacing:3px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;}
 .hn{color:var(--bl);}.an{color:var(--or);}.sn{color:var(--ac);font-size:1.3em;}.vs{color:var(--mt);font-size:.55em;}
-.mmeta{margin-top:7px;font-size:11px;color:var(--mt);font-family:'DM Mono',monospace;}
+.mmeta{margin-top:7px;font-size:11px;color:var(--mt);font-family:DM Mono,monospace;}
 .tcols{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:12px;}
 @media(max-width:480px){.tcols{grid-template-columns:1fr;}}
 .tc{border-radius:13px;padding:14px;border:1px solid var(--bd);position:relative;overflow:hidden;}
 .tc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
 .tchome::before{background:var(--bl);}.tcaway::before{background:var(--or);}
 .tchome{background:rgba(59,130,246,.04);}.tcaway{background:rgba(249,115,22,.04);}
-.ctnm{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;margin-bottom:11px;}
+.ctnm{font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:2px;margin-bottom:11px;}
 .tchome .ctnm{color:var(--bl);}.tcaway .ctnm{color:var(--or);}
 .sr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd);}
 .sr:last-child{border-bottom:none;}
-.sk{font-family:'DM Mono',monospace;font-size:10px;color:var(--mt);letter-spacing:1px;}
-.sv{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;}
+.sk{font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:1px;}
+.sv{font-family:DM Mono,monospace;font-size:14px;font-weight:500;}
 .dv{height:1px;background:var(--bd);margin:9px 0;}
-.rp{font-size:25px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;margin-bottom:3px;}
+.rp{font-size:25px;font-family:Bebas Neue,sans-serif;letter-spacing:2px;margin-bottom:3px;}
 .oc{color:var(--rd);}.nc{color:var(--gd);}.uc{color:var(--gr);}
 .bbg{height:4px;background:rgba(255,255,255,.05);border-radius:2px;margin-bottom:5px;}
 .bf{height:100%;border-radius:2px;max-width:100%;transition:width 1s ease;}
@@ -119,29 +119,29 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,7vw,76px);letter-spa
 .scbox{background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:15px;margin-bottom:12px;}
 .sci{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--bd);}
 .sci:last-child{border-bottom:none;}
-.scr{font-family:'Bebas Neue',sans-serif;font-size:18px;min-width:20px;}
+.scr{font-family:Bebas Neue,sans-serif;font-size:18px;min-width:20px;}
 .r1{color:var(--gd);}.r2{color:#94a3b8;}.r3{color:#cd7c2f;}.rx{color:var(--mt);}
 .scnm{font-weight:500;font-size:13px;}
-.scsb{font-size:11px;color:var(--mt);font-family:'DM Mono',monospace;}
+.scsb{font-size:11px;color:var(--mt);font-family:DM Mono,monospace;}
 .scp{text-align:right;min-width:46px;}
-.scpv{font-family:'Bebas Neue',sans-serif;font-size:20px;}
+.scpv{font-family:Bebas Neue,sans-serif;font-size:20px;}
 .spb{width:46px;height:3px;background:rgba(255,255,255,.05);border-radius:2px;margin-top:3px;overflow:hidden;}
 .spf{height:100%;border-radius:2px;}
 .hc{color:var(--gr);}.mc2{color:var(--gd);}.lc{color:var(--mt);}
 .fh{background:var(--gr);}.fm{background:var(--gd);}.fl{background:var(--mt);}
-.tbdg{font-size:10px;padding:1px 7px;border-radius:100px;font-family:'DM Mono',monospace;}
+.tbdg{font-size:10px;padding:1px 7px;border-radius:100px;font-family:DM Mono,monospace;}
 .hbdg{background:rgba(59,130,246,.15);color:#93c5fd;}.abdg{background:rgba(249,115,22,.15);color:#fdba74;}
 
 /* BETS */
 .bbet{background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(0,229,255,.08));border:1px solid rgba(124,58,237,.4);border-radius:13px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
-.bbi{font-size:26px;}.bblb{font-family:'DM Mono',monospace;font-size:9px;color:var(--mt);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;}
-.bbn{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:#c4b5fd;}
+.bbi{font-size:26px;}.bblb{font-family:DM Mono,monospace;font-size:9px;color:var(--mt);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;}
+.bbn{font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:2px;color:#c4b5fd;}
 .bbr{font-size:11px;color:var(--mt);margin-top:2px;}
-.bbc{margin-left:auto;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;}
+.bbc{margin-left:auto;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1px;}
 .brow{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px;}
 .bch{background:var(--sf2);border:1px solid var(--bd);border-radius:11px;padding:11px;text-align:center;}
 .bch.hot{background:rgba(124,58,237,.1);border-color:rgba(124,58,237,.4);}
-.bci{font-size:17px;margin-bottom:4px;}.bcn{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+.bci{font-size:17px;margin-bottom:4px;}.bcn{font-family:DM Mono,monospace;font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
 .bch.hot .bcn{color:#c4b5fd;}.bcb{height:2px;border-radius:2px;max-width:40px;margin:4px auto 3px;}.bct{font-size:10px;color:var(--mt);}.bcr{font-size:10px;color:var(--mt);margin-top:3px;line-height:1.4;}
 .haute{background:var(--gr);}.moyenne{background:var(--gd);}.faible{background:var(--mt);}
 
@@ -149,22 +149,22 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,7vw,76px);letter-spa
 .aib{background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:15px;margin-bottom:12px;}
 .aih{display:flex;align-items:center;gap:7px;margin-bottom:9px;}
 .aid{width:6px;height:6px;background:var(--ac);border-radius:50%;animation:pulse 2s infinite;}
-.ait{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--ac);}
+.ait{font-family:Bebas Neue,sans-serif;font-size:15px;letter-spacing:2px;color:var(--ac);}
 .aix{font-size:13px;line-height:1.85;color:var(--tx);opacity:.88;white-space:pre-wrap;}
 
 /* STANDINGS TABLE */
 .stbox{background:var(--sf);border:1px solid var(--bd);border-radius:15px;overflow:hidden;margin-bottom:16px;}
 .st-league-hdr{padding:12px 14px;background:var(--sf2);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;}
-.st-league-name{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--ac);}
-.st-league-info{font-family:'DM Mono',monospace;font-size:11px;color:var(--mt);}
-.sthdr{display:grid;grid-template-columns:30px 1fr 28px 28px 28px 28px 40px 50px;gap:3px;padding:8px 12px;background:rgba(0,0,0,.2);font-family:'DM Mono',monospace;font-size:10px;color:var(--mt);letter-spacing:1px;text-transform:uppercase;}
+.st-league-name{font-family:Bebas Neue,sans-serif;font-size:18px;letter-spacing:2px;color:var(--ac);}
+.st-league-info{font-family:DM Mono,monospace;font-size:11px;color:var(--mt);}
+.sthdr{display:grid;grid-template-columns:30px 1fr 28px 28px 28px 28px 40px 50px;gap:3px;padding:8px 12px;background:rgba(0,0,0,.2);font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:1px;text-transform:uppercase;}
 .strow{display:grid;grid-template-columns:30px 1fr 28px 28px 28px 28px 40px 50px;gap:3px;padding:9px 12px;border-bottom:1px solid var(--bd);align-items:center;transition:background .15s;}
 .strow:last-child{border-bottom:none;}
 .strow:hover{background:rgba(255,255,255,.02);}
-.stpos{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;text-align:center;}
+.stpos{font-family:DM Mono,monospace;font-size:12px;font-weight:500;text-align:center;}
 .stnm{font-size:12px;font-weight:500;}
-.stnum{font-family:'DM Mono',monospace;font-size:12px;text-align:center;color:var(--mt);}
-.stpts{font-family:'Bebas Neue',sans-serif;font-size:17px;text-align:center;}
+.stnum{font-family:DM Mono,monospace;font-size:12px;text-align:center;color:var(--mt);}
+.stpts{font-family:Bebas Neue,sans-serif;font-size:17px;text-align:center;}
 .stfm{display:flex;gap:2px;justify-content:center;}
 .fw{width:13px;height:13px;border-radius:3px;background:rgba(34,211,165,.2);color:var(--gr);font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;}
 .fd{width:13px;height:13px;border-radius:3px;background:rgba(245,158,11,.15);color:var(--gd);font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;}
@@ -177,7 +177,7 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,7vw,76px);letter-spa
 .cubtn{background:var(--sf2);border:2px dashed rgba(255,255,255,.07);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;-webkit-tap-highlight-color:transparent;}
 .cubtn:hover{border-color:var(--ac2);background:rgba(124,58,237,.05);}
 .cubtn.ld{border-style:solid;border-color:rgba(34,211,165,.35);}
-.cubi{font-size:22px;margin-bottom:5px;}.cubl{font-family:'DM Mono',monospace;font-size:10px;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.cubi{font-size:22px;margin-bottom:5px;}.cubl{font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
 .cubs{font-size:11px;color:var(--mt);}.cubtn.ld .cubs{color:var(--gr);}
 .cuck{position:absolute;top:6px;right:6px;width:16px;height:16px;background:var(--gr);border-radius:50%;color:#000;font-size:9px;display:none;align-items:center;justify-content:center;font-weight:700;}
 .cubtn.ld .cuck{display:flex;}
@@ -185,19 +185,19 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,7vw,76px);letter-spa
 /* LEAGUE SELECTOR in Donnees */
 .league-sel-box{background:var(--sf2);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px;}
 .league-sel-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-.league-flag{padding:6px 12px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;font-family:'DM Mono',monospace;font-size:11px;color:var(--mt);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
+.league-flag{padding:6px 12px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;font-family:DM Mono,monospace;font-size:11px;color:var(--mt);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;}
 .league-flag.sel{border-color:var(--ac2);color:#c4b5fd;background:rgba(124,58,237,.1);}
 .new-league-inp{flex:1;min-width:120px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:6px 12px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;}
 .new-league-inp:focus{border-color:var(--ac);}
-.btn-add-ok{padding:6px 14px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:8px;color:#fff;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;}
+.btn-add-ok{padding:6px 14px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:8px;color:#fff;font-family:DM Mono,monospace;font-size:11px;cursor:pointer;}
 
 /* MISC */
 .iload{text-align:center;padding:36px;display:none;}
 .ispin{width:34px;height:34px;border:3px solid rgba(0,229,255,.1);border-top-color:var(--ac);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px;}
-.ilbl{font-family:'DM Mono',monospace;color:var(--ac);font-size:11px;letter-spacing:2px;animation:blink 1.5s infinite;}
+.ilbl{font-family:DM Mono,monospace;color:var(--ac);font-size:11px;letter-spacing:2px;animation:blink 1.5s infinite;}
 .err{background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.3);border-radius:11px;padding:12px 15px;color:var(--rd);font-size:13px;line-height:1.7;margin-bottom:12px;display:none;}
 .info{background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.15);border-radius:11px;padding:12px 15px;font-size:13px;color:var(--ac);line-height:1.7;margin-bottom:12px;}
-.disc{text-align:center;padding:12px 0 34px;font-size:10px;color:var(--mt);opacity:.45;font-family:'DM Mono',monospace;}
+.disc{text-align:center;padding:12px 0 34px;font-size:10px;color:var(--mt);opacity:.45;font-family:DM Mono,monospace;}
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
@@ -236,50 +236,50 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,7vw,76px);letter-spa
 <!-- ═══════════ TAB 0 — ANALYSE ═══════════ -->
 <div class="panel on" id="p0">
   <div class="tgrid">
+    <input type="file" id="hi" accept="image/*" multiple style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;">
+    <input type="file" id="ai" accept="image/*" multiple style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;">
     <div class="tbox">
       <div class="tbhdr"><div style="width:8px;height:8px;border-radius:50%;background:var(--bl);flex-shrink:0"></div><input class="tni h" id="hn" placeholder="Equipe domicile"></div>
-      <label class="darea dh" id="hdrop">
+      <div class="darea dh" id="hdrop">
         <div class="di">🏠</div><div class="dt">Screenshots xG domicile<br>Understat - plusieurs OK</div>
-        <span class="bpk h">Images</span>
-        <input type="file" id="hi" accept="image/*" multiple style="display:none">
-      </label>
+        <button type="button" class="bpk h" onclick="document.getElementById('hi').click()">📂 Images</button>
+      </div>
       <div class="thumbs" id="hthumbs"></div>
     </div>
     <div class="tbox">
       <div class="tbhdr"><div style="width:8px;height:8px;border-radius:50%;background:var(--or);flex-shrink:0"></div><input class="tni a" id="an" placeholder="Equipe exterieur"></div>
-      <label class="darea da" id="adrop">
+      <div class="darea da" id="adrop">
         <div class="di">✈️</div><div class="dt">Screenshots xG exterieur<br>Understat - plusieurs OK</div>
-        <span class="bpk a">Images</span>
-        <input type="file" id="ai" accept="image/*" multiple style="display:none">
-      </label>
+        <button type="button" class="bpk a" onclick="document.getElementById('ai').click()">📂 Images</button>
+      </div>
       <div class="thumbs" id="athumbs"></div>
     </div>
   </div>
   <!-- COTES -->
   <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:14px;margin-bottom:14px;">
-    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Cotes du match (optionnel)</div>
+    <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--ac);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Cotes du match (optionnel)</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
       <div>
-        <div style="font-size:11px;color:var(--mt);font-family:'DM Mono',monospace;margin-bottom:5px;">DOM victoire</div>
-        <input id="oddHome" type="number" step="0.01" min="1" placeholder="ex: 2.10" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--bl);font-family:'DM Mono',monospace;font-size:14px;outline:none;">
+        <div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:5px;">DOM victoire</div>
+        <input id="oddHome" type="number" step="0.01" min="1" placeholder="ex: 2.10" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--bl);font-family:DM Mono,monospace;font-size:14px;outline:none;">
       </div>
       <div>
-        <div style="font-size:11px;color:var(--mt);font-family:'DM Mono',monospace;margin-bottom:5px;">Match nul</div>
-        <input id="oddDraw" type="number" step="0.01" min="1" placeholder="ex: 3.40" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--gd);font-family:'DM Mono',monospace;font-size:14px;outline:none;">
+        <div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:5px;">Match nul</div>
+        <input id="oddDraw" type="number" step="0.01" min="1" placeholder="ex: 3.40" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--gd);font-family:DM Mono,monospace;font-size:14px;outline:none;">
       </div>
       <div>
-        <div style="font-size:11px;color:var(--mt);font-family:'DM Mono',monospace;margin-bottom:5px;">EXT victoire</div>
-        <input id="oddAway" type="number" step="0.01" min="1" placeholder="ex: 3.80" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--or);font-family:'DM Mono',monospace;font-size:14px;outline:none;">
+        <div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:5px;">EXT victoire</div>
+        <input id="oddAway" type="number" step="0.01" min="1" placeholder="ex: 3.80" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--or);font-family:DM Mono,monospace;font-size:14px;outline:none;">
       </div>
     </div>
     <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div>
-        <div style="font-size:11px;color:var(--mt);font-family:'DM Mono',monospace;margin-bottom:5px;">Over 2.5</div>
-        <input id="oddOver" type="number" step="0.01" min="1" placeholder="ex: 1.85" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--gr);font-family:'DM Mono',monospace;font-size:14px;outline:none;">
+        <div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:5px;">Over 2.5</div>
+        <input id="oddOver" type="number" step="0.01" min="1" placeholder="ex: 1.85" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--gr);font-family:DM Mono,monospace;font-size:14px;outline:none;">
       </div>
       <div>
-        <div style="font-size:11px;color:var(--mt);font-family:'DM Mono',monospace;margin-bottom:5px;">BTTS</div>
-        <input id="oddBtts" type="number" step="0.01" min="1" placeholder="ex: 1.75" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--ac);font-family:'DM Mono',monospace;font-size:14px;outline:none;">
+        <div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:5px;">BTTS</div>
+        <input id="oddBtts" type="number" step="0.01" min="1" placeholder="ex: 1.75" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--ac);font-family:DM Mono,monospace;font-size:14px;outline:none;">
       </div>
     </div>
   </div>
@@ -319,31 +319,31 @@ h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,7vw,76px);letter-spa
 
     <div class="sec" style="margin-top:14px">Uploader des donnees</div>
     <div class="cugrid">
-      <label class="cubtn" id="cub0">
+      <input type="file" accept="image/*" multiple style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;" id="cui0">
+      <input type="file" accept="image/*" multiple style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;" id="cui1">
+      <input type="file" accept="image/*" multiple style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;" id="cui2">
+      <input type="file" accept="image/*" multiple style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;" id="cui3">
+      <input type="file" accept="image/*" multiple style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;" id="cui4">
+      <div class="cubtn" id="cub0" onclick="document.getElementById('cui0').click()">
         <div class="cubi">🏆</div><div class="cubl">Classement</div>
         <div class="cubs" id="cus0">Non charge</div><div class="cuck">✓</div>
-        <input type="file" accept="image/*" multiple style="display:none" id="cui0">
-      </label>
-      <label class="cubtn" id="cub1">
+      </div>
+      <div class="cubtn" id="cub1" onclick="document.getElementById('cui1').click()">
         <div class="cubi">⚽</div><div class="cubl">Top Buteurs</div>
         <div class="cubs" id="cus1">Non charge</div><div class="cuck">✓</div>
-        <input type="file" accept="image/*" multiple style="display:none" id="cui1">
-      </label>
-      <label class="cubtn" id="cub2">
+      </div>
+      <div class="cubtn" id="cub2" onclick="document.getElementById('cui2').click()">
         <div class="cubi">📋</div><div class="cubl">Compo DOM</div>
         <div class="cubs" id="cus2">Non charge</div><div class="cuck">✓</div>
-        <input type="file" accept="image/*" multiple style="display:none" id="cui2">
-      </label>
-      <label class="cubtn" id="cub3">
+      </div>
+      <div class="cubtn" id="cub3" onclick="document.getElementById('cui3').click()">
         <div class="cubi">📋</div><div class="cubl">Compo EXT</div>
         <div class="cubs" id="cus3">Non charge</div><div class="cuck">✓</div>
-        <input type="file" accept="image/*" multiple style="display:none" id="cui3">
-      </label>
-      <label class="cubtn" id="cub4">
+      </div>
+      <div class="cubtn" id="cub4" onclick="document.getElementById('cui4').click()">
         <div class="cubi">🔄</div><div class="cubl">H2H</div>
         <div class="cubs" id="cus4">Non charge</div><div class="cuck">✓</div>
-        <input type="file" accept="image/*" multiple style="display:none" id="cui4">
-      </label>
+      </div>
     </div>
     <div class="iload" id="ctxload"><div class="ispin"></div><div class="ilbl" id="ctxlbl">ANALYSE...</div></div>
     <div class="err" id="errctx"></div>
@@ -1123,7 +1123,7 @@ function renderReport(d){
     var col=pctColor(pct);
     var hot=pct>=55;
     return '<div class="bch'+(hot?' hot':'')+'"><div class="bci">'+icon+'</div><div class="bcn">'+lbl+'</div>'
-      +'<div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;color:'+col+';">'+pct+'%</div>'
+      +'<div style="font-family:Bebas Neue,sans-serif;font-size:26px;letter-spacing:1px;color:'+col+';">'+pct+'%</div>'
       +'<div style="height:3px;border-radius:2px;background:rgba(255,255,255,.05);margin:4px 0;overflow:hidden;"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+col+';border-radius:2px;"></div></div>'
       +(bet.r?'<div class="bcr" style="font-size:9px;">'+bet.r+'</div>':'')
       +'</div>';
@@ -1141,11 +1141,11 @@ function renderReport(d){
   var valueHtml='';
   if(b.values&&b.values.length){
     valueHtml='<div style="background:rgba(34,211,165,.08);border:1px solid rgba(34,211,165,.25);border-radius:12px;padding:13px 16px;margin-bottom:10px;">'
-      +'<div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gr);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">VALUE BETS DETECTEES</div>';
+      +'<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--gr);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">VALUE BETS DETECTEES</div>';
     b.values.forEach(function(v){
       valueHtml+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;">'
-        +'<span style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:var(--gr);">'+v.label+'</span>'
-        +'<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mt);">cote '+v.odd+' | xG '+v.val.xgProb+'% vs implied '+v.val.implied+'% | edge +'+(v.val.edge)+'%</span>'
+        +'<span style="font-family:Bebas Neue,sans-serif;font-size:18px;letter-spacing:1px;color:var(--gr);">'+v.label+'</span>'
+        +'<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--mt);">cote '+v.odd+' | xG '+v.val.xgProb+'% vs implied '+v.val.implied+'% | edge +'+(v.val.edge)+'%</span>'
         +'</div>';
     });
     valueHtml+='</div>';
@@ -1155,7 +1155,7 @@ function renderReport(d){
   var probaHtml='';
   if(hasOdds){
     probaHtml='<div style="background:var(--sf2);border-radius:12px;padding:13px 16px;margin-bottom:10px;">'
-      +'<div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mt);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Analyse des cotes</div>'
+      +'<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">Analyse des cotes</div>'
       +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;">';
     var oddsList=[
       {label:'DOM',odd:d.odds.home,col:'var(--bl)'},
@@ -1168,8 +1168,8 @@ function renderReport(d){
       if(!o.odd)return;
       var impl=Math.round(100/o.odd);
       probaHtml+='<div style="text-align:center;background:var(--sf);border-radius:8px;padding:8px;">'
-        +'<div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mt);">'+o.label+'</div>'
-        +'<div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:'+o.col+';">'+o.odd+'</div>'
+        +'<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);">'+o.label+'</div>'
+        +'<div style="font-family:Bebas Neue,sans-serif;font-size:20px;color:'+o.col+';">'+o.odd+'</div>'
         +'<div style="font-size:10px;color:var(--mt);">impl. '+impl+'%</div>'
         +'</div>';
     });
