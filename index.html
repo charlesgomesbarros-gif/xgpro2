@@ -894,7 +894,32 @@ async function doAnalyze(){
     await new Promise(function(r){setTimeout(r,200);});
     document.getElementById('pgw').style.display='none';
     document.getElementById('bana').disabled=false;
-    window._lastMatchData=d; renderReport(d);
+    window._lastMatchData=d;
+    // Call tipster API here, then render
+    setProg(95,'Analyse tipster IA...');
+    try {
+      var tresp=await fetch('/api/tipster',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({matchData:{
+          ht:d.ht,at:d.at,
+          hxg:d.hxg,axg:d.axg,
+          hxga:d.hxga,axga:d.axga,
+          hr:d.hr,ar:d.ar,
+          adjXgH:d.adjXgH,adjXgA:d.adjXgA,
+          hstand:d.hstand,astand:d.astand,
+          bets:d.bets
+        }})
+      });
+      var tdata=await tresp.json();
+      if(tdata.analysis) d._tipsterAnalysis=tdata.analysis;
+    } catch(e2){ d._tipsterAnalysis=''; }
+    setProg(100,'Termine !');
+    await new Promise(function(r){setTimeout(r,150);});
+    document.getElementById('pgw').style.display='none';
+    document.getElementById('bana').disabled=false;
+    renderReport(d);
+    return; // skip the duplicate render below
   }catch(e){
     document.getElementById('pgw').style.display='none';
     document.getElementById('bana').disabled=false;
@@ -1556,32 +1581,13 @@ function renderReport(d){
     +bchip('🔥','OVER 4.5',b45)
     +bchip('🫂','BTTS',b.btts)
     +'</div>'+h2hhtml;
-  // AI TIPSTER - Call /api/tipster with full match data for coherent analysis
+  // AI TIPSTER - rendered after tipster API call (called from doAnalyze)
   document.getElementById('aibox').style.display='block';
-  document.getElementById('aitx').innerHTML='<div style="color:var(--mt);font-size:12px;font-family:DM Mono,monospace;animation:blink 1.5s infinite;letter-spacing:2px;">ANALYSE EN COURS...</div>';
+  document.getElementById('aitx').innerHTML='<div style="color:var(--mt);font-size:12px;font-family:DM Mono,monospace;letter-spacing:2px;">Analyse en cours...</div>';
 
-  (async function(){
-    var txt=d.analysis||'';
-    if(d.vbet&&txt.indexOf('Value Bet')<0) txt+='\nValue Bet: '+d.vbet;
-    try {
-      var resp=await fetch('/api/tipster',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({matchData:{
-          ht:d.ht, at:d.at,
-          hxg:d.hxg, axg:d.axg,
-          hxga:d.hxga, axga:d.axga,
-          hr:d.hr, ar:d.ar,
-          adjXgH:d.adjXgH, adjXgA:d.adjXgA,
-          hstand:d.hstand, astand:d.astand,
-          bets:d.bets
-        }})
-      });
-      var data2=await resp.json();
-      if(data2.analysis) txt=data2.analysis;
-    } catch(e){}
-    renderAITipster(txt);
-  })();
+  if(d._tipsterAnalysis){
+    renderAITipster(d._tipsterAnalysis);
+  }
 
   function renderAITipster(txt){
   if(txt){
@@ -1621,7 +1627,8 @@ function renderReport(d){
       }
     });
     document.getElementById('aitx').innerHTML=html;
-  }} // end renderAITipster + if(txt)
+  } // end if(txt)
+  } // end renderAITipster
 
   // AUTO EXPLANATION BOX
   var expHtml = '<div style="background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:15px;margin-top:12px;">';
