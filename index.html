@@ -1003,9 +1003,23 @@ function buildMatchData(hm,am,hn,an,odds){
   // Detect from team xG data: if set_piece_xG_ratio > 0.25, team is set-piece reliant
   function getSetPieceRatio(merged){
     if(!merged) return 0;
-    // If AI extracted set piece breakdown
+    // Primary: AI extracted set piece breakdown
     if(merged.set_piece_xG && merged.team_xG_total){
       return parseFloat(merged.set_piece_xG) / parseFloat(merged.team_xG_total);
+    }
+    // Fallback: use corner_xG + freekick_xG if available
+    if((merged.corner_xG || merged.freekick_xG) && merged.team_xG_total){
+      var spXg = (parseFloat(merged.corner_xG)||0) + (parseFloat(merged.freekick_xG)||0);
+      return spXg / parseFloat(merged.team_xG_total);
+    }
+    // Fallback 2: check top_scorers for position patterns
+    // If team has many MID/DEF scorers relative to FWD, likely set-piece team
+    if(merged.top_scorers && merged.top_scorers.length){
+      var midDefCount = merged.top_scorers.filter(function(s){
+        var p=(s.position||'').toUpperCase();
+        return p==='M'||p==='MID'||p==='D'||p==='DEF';
+      }).length;
+      if(midDefCount >= 2) return 0.28; // assume set piece team
     }
     return 0;
   }
@@ -1183,8 +1197,8 @@ function computeBets(d){
   }
 
   b.attackH=attackH; b.attackA=attackA;
-  b.over={pct:overProb, r:'Poisson: '+overProb+'% (xG='+tot.toFixed(2)+')'+oddsInfo(overVal,odds.over)};
-  b.btts={pct:bttsProb, r:''+bttsProb+'% (hxG='+hxg.toFixed(2)+' axG='+axg.toFixed(2)+')'+oddsInfo(bttsVal,odds.btts)};
+  b.over={pct:overProb, r:'Poisson: '+overProb+'% (xG/match: '+attackH.toFixed(2)+'+'+attackA.toFixed(2)+'='+tot.toFixed(2)+')'+oddsInfo(overVal,odds.over)};
+  b.btts={pct:bttsProb, r:''+bttsProb+'% (xG/match: DOM '+attackH.toFixed(2)+' EXT '+attackA.toFixed(2)+')'+oddsInfo(bttsVal,odds.btts)};
   b.hw={pct:hWinProb, r:d.ht+' WIN: '+hWinProb+'%'+oddsInfo(hVal,odds.home)};
   b.aw={pct:aWinProb, r:d.at+' WIN: '+aWinProb+'%'+oddsInfo(aVal,odds.away)};
   b.draw={pct:drawProb, r:'NUL: '+drawProb+'%'+oddsInfo(dVal,odds.draw)};
