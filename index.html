@@ -282,6 +282,16 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
         <input id="oddBtts" type="number" step="0.01" min="1" placeholder="ex: 1.75" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--ac);font-family:DM Mono,monospace;font-size:14px;outline:none;">
       </div>
     </div>
+    <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:5px;">Over 3.5</div>
+        <input id="oddOver35" type="number" step="0.01" min="1" placeholder="ex: 3.20" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--gr);font-family:DM Mono,monospace;font-size:14px;outline:none;">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:5px;">Over 4.5</div>
+        <input id="oddOver45" type="number" step="0.01" min="1" placeholder="ex: 6.00" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--gr);font-family:DM Mono,monospace;font-size:14px;outline:none;">
+      </div>
+    </div>
   </div>
   <button class="bana" id="bana" onclick="doAnalyze()" disabled>ANALYSER LE MATCH</button>
   <div class="pgw" id="pgw"><div class="pgt"><div class="pgf" id="pgf"></div></div><div class="pgl" id="pgl">...</div></div>
@@ -856,11 +866,13 @@ async function doAnalyze(){
   var hn=document.getElementById('hn').value.trim();
   var an=document.getElementById('an').value.trim();
   var odds={
-    home: parseFloat(document.getElementById('oddHome').value)||null,
-    draw: parseFloat(document.getElementById('oddDraw').value)||null,
-    away: parseFloat(document.getElementById('oddAway').value)||null,
-    over: parseFloat(document.getElementById('oddOver').value)||null,
-    btts: parseFloat(document.getElementById('oddBtts').value)||null,
+    home:   parseFloat(document.getElementById('oddHome').value)||null,
+    draw:   parseFloat(document.getElementById('oddDraw').value)||null,
+    away:   parseFloat(document.getElementById('oddAway').value)||null,
+    over:   parseFloat(document.getElementById('oddOver').value)||null,
+    btts:   parseFloat(document.getElementById('oddBtts').value)||null,
+    over35: parseFloat(document.getElementById('oddOver35').value)||null,
+    over45: parseFloat(document.getElementById('oddOver45').value)||null,
   };
   try{
     var hm=null,am=null;
@@ -1197,6 +1209,50 @@ function computeBets(d){
   }
 
   b.attackH=attackH; b.attackA=attackA;
+
+  // === SIGNAL SYSTEM (quality filter + decision) ===
+  // Uses per-match xG values (attackH/attackA) and xGA per match
+  var xgPmH_s = attackH; // already per-match adjusted
+  var xgPmA_s = attackA;
+  var xgaPmH_s = xgaPmH || (d.hxga ? toPerMatch(d.hxga) : 1.2);
+  var xgaPmA_s = xgaPmA || (d.axga ? toPerMatch(d.axga) : 1.2);
+
+  // Quality filter: avoid weak matches
+  var qualityOk = xgPmH_s >= 1.2 && xgPmA_s >= 1.0;
+
+  // Signals
+  var sig_btts  = xgPmH_s > 1.4 && xgPmA_s > 1.2 && xgaPmH_s > 1.2 && xgaPmA_s > 1.2;
+  var sig_over25= (xgPmH_s + xgPmA_s) > 2.8;
+  var sig_over35= (xgPmH_s + xgPmA_s) > 3.2;
+
+  // Final signal
+  var finalSignal='';
+  if(!qualityOk){
+    finalSignal='NO BET - match trop ferme (xG insuff.)';
+    b.signalLevel=0;
+  } else if(sig_btts && sig_over25){
+    finalSignal='BTTS + OVER 2.5';
+    b.signalLevel=3;
+  } else if(sig_over25){
+    finalSignal='OVER 2.5';
+    b.signalLevel=2;
+  } else if(sig_btts){
+    finalSignal='BTTS';
+    b.signalLevel=2;
+  } else if(sig_over35){
+    finalSignal='OVER 3.5 VALUE';
+    b.signalLevel=1;
+  } else {
+    finalSignal='NO BET';
+    b.signalLevel=0;
+  }
+  b.signal=finalSignal;
+  b.qualityOk=qualityOk;
+  b.sigBtts=sig_btts;
+  b.sigOver25=sig_over25;
+  b.sigOver35=sig_over35;
+  // ===================================================
+
   b.over={pct:overProb, r:'Poisson: '+overProb+'% (xG/match: '+attackH.toFixed(2)+'+'+attackA.toFixed(2)+'='+tot.toFixed(2)+')'+oddsInfo(overVal,odds.over)};
   b.btts={pct:bttsProb, r:''+bttsProb+'% (xG/match: DOM '+attackH.toFixed(2)+' EXT '+attackA.toFixed(2)+')'+oddsInfo(bttsVal,odds.btts)};
   b.hw={pct:hWinProb, r:d.ht+' WIN: '+hWinProb+'%'+oddsInfo(hVal,odds.home)};
@@ -1339,32 +1395,55 @@ function renderReport(d){
     var pct=bet.pct||0;
     var col=pctColor(pct);
     var hot=pct>=55;
-    // Extract edge from bet.r if available
+    // Extract edge and VALUE
     var edgeHtml='';
-    if(bet.r&&bet.r.indexOf('VALUE')>=0){
+    var valueBadge='';
+    var isValue=bet.isValue||(bet.r&&bet.r.indexOf('VALUE')>=0);
+    if(bet.r&&bet.r.indexOf('impl.')>=0){
       var edgeMatch=bet.r.match(/impl\.([0-9.]+)%/);
       var implPct=edgeMatch?parseFloat(edgeMatch[1]):null;
       if(implPct){
         var edge=Math.round((pct-implPct)*10)/10;
-        var edgeCol=edge>5?'var(--gr)':edge>0?'var(--gd)':'var(--mt)';
+        var edgeCol=edge>5?'var(--gr)':edge>0?'var(--gd)':'var(--rd)';
         edgeHtml='<div style="font-size:10px;color:'+edgeCol+';margin-top:2px;font-family:DM Mono,monospace;">edge '+(edge>0?'+':'')+edge+'%</div>';
-      }
-    } else if(bet.r&&bet.r.indexOf('impl.')>=0){
-      var edgeMatch2=bet.r.match(/impl\.([0-9.]+)%/);
-      var implPct2=edgeMatch2?parseFloat(edgeMatch2[1]):null;
-      if(implPct2){
-        var edge2=Math.round((pct-implPct2)*10)/10;
-        var edgeCol2=edge2>5?'var(--gr)':edge2>0?'var(--gd)':'var(--rd)';
-        edgeHtml='<div style="font-size:10px;color:'+edgeCol2+';margin-top:2px;font-family:DM Mono,monospace;">edge '+(edge2>0?'+':'')+edge2+'%</div>';
+        if(edge>5) valueBadge='<div style="display:inline-block;background:rgba(34,211,165,.15);border:1px solid rgba(34,211,165,.4);border-radius:6px;padding:2px 7px;font-size:10px;color:var(--gr);font-family:DM Mono,monospace;letter-spacing:1px;margin-top:3px;">✓ VALUE</div>';
       }
     }
     return '<div class="bch'+(hot?' hot':'')+'"><div class="bci">'+icon+'</div><div class="bcn">'+lbl+'</div>'
       +'<div style="font-family:Bebas Neue,sans-serif;font-size:26px;letter-spacing:1px;color:'+col+';">'+pct+'%</div>'
       +'<div style="height:3px;border-radius:2px;background:rgba(255,255,255,.05);margin:4px 0;overflow:hidden;"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+col+';border-radius:2px;"></div></div>'
       +edgeHtml
+      +valueBadge
       +(bet.r?'<div class="bcr" style="font-size:9px;">'+bet.r+'</div>':'')
       +'</div>';
   }
+  // Signal banner
+  var signalHtml='';
+  if(b.signal){
+    var slvl=b.signalLevel||0;
+    var scol=slvl===3?'var(--gr)':slvl===2?'var(--gd)':slvl===1?'var(--ac)':'var(--rd)';
+    var sicon=slvl===3?'FORT':slvl===2?'BON':slvl===1?'VALUE':'NO BET';
+    var sbg=slvl>=2?'rgba(34,211,165,.08)':slvl===1?'rgba(0,229,255,.08)':'rgba(255,77,109,.08)';
+    var sborder=slvl>=2?'rgba(34,211,165,.3)':slvl===1?'rgba(0,229,255,.3)':'rgba(255,77,109,.3)';
+    signalHtml='<div style="background:'+sbg+';border:1px solid '+sborder+';border-radius:13px;padding:14px 18px;margin-bottom:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">';
+    signalHtml+='<div>';
+    signalHtml+='<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--mt);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">Signal de qualite</div>';
+    signalHtml+='<div style="font-family:Bebas Neue,sans-serif;font-size:26px;letter-spacing:2px;color:'+scol+';">'+b.signal+'</div>';
+    signalHtml+='</div>';
+    signalHtml+='<div style="margin-left:auto;text-align:right;">';
+    signalHtml+='<div style="font-family:Bebas Neue,sans-serif;font-size:16px;color:'+scol+';">'+sicon+'</div>';
+    signalHtml+='<div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;">xG/match: '+b.attackH.toFixed(2)+' vs '+b.attackA.toFixed(2)+'</div>';
+    // Show conditions
+    var conds=[];
+    if(b.qualityOk) conds.push('<span style="color:var(--gr);">Qualite OK</span>');
+    else conds.push('<span style="color:var(--rd);">Qualite NOK</span>');
+    if(b.sigBtts)  conds.push('<span style="color:var(--gr);">BTTS</span>');
+    if(b.sigOver25) conds.push('<span style="color:var(--gr);">O2.5</span>');
+    if(b.sigOver35) conds.push('<span style="color:var(--gd);">O3.5</span>');
+    signalHtml+='<div style="font-size:10px;font-family:DM Mono,monospace;margin-top:3px;">'+conds.join(' | ')+'</div>';
+    signalHtml+='</div></div>';
+  }
+
   var bbhtml=b.best?'<div class="bbet"><span class="bbi">🎯</span><div><div class="bblb">Meilleur pari</div><div class="bbn">'+b.best.label+'</div><div class="bbr">'+(b.best.r||'')+'</div></div><div class="bbc" style="color:'+cc+'">'+cl+'</div></div>':'';
   var h2hhtml='';
   if(d.h2h&&d.h2h.length){
@@ -1467,12 +1546,24 @@ function renderReport(d){
     });
     probaHtml+='</div></div>';
   }
-  document.getElementById('betsbox').innerHTML=exactHtml+bbhtml+probaHtml+valueHtml
+  // Build Over 3.5 and Over 4.5 bet objects
+  var over35odd = d.odds&&d.odds.over35 ? d.odds.over35 : null;
+  var over45odd = d.odds&&d.odds.over45 ? d.odds.over45 : null;
+  var over35val = over35odd ? calcValue(b.over35pct||0, over35odd) : null;
+  var over45val = over45odd ? calcValue(b.over45pct||0, over45odd) : null;
+  var b35={pct:b.over35pct||0, r:'Poisson: '+(b.over35pct||0)+'%'+(over35odd?' | cote '+over35odd+' -> impl.'+Math.round(100/over35odd)+'% vs xG '+(b.over35pct||0)+'%'+(over35val&&over35val.isValue?' VALUE':''):'')};
+  var b45={pct:b.over45pct||0, r:'Poisson: '+(b.over45pct||0)+'%'+(over45odd?' | cote '+over45odd+' -> impl.'+Math.round(100/over45odd)+'% vs xG '+(b.over45pct||0)+'%'+(over45val&&over45val.isValue?' VALUE':''):'')};
+  if(over35val&&over35val.isValue) b35.isValue=true;
+  if(over45val&&over45val.isValue) b45.isValue=true;
+
+  document.getElementById('betsbox').innerHTML=signalHtml+exactHtml+bbhtml+probaHtml+valueHtml
     +'<div class="brow">'
     +bchip('🏠',d.ht+' WIN',b.hw)
     +bchip('🤝','NUL',b.draw)
     +bchip('✈️',d.at+' WIN',b.aw)
     +bchip('📈','OVER 2.5',b.over)
+    +bchip('📊','OVER 3.5',b35)
+    +bchip('🔥','OVER 4.5',b45)
     +bchip('🫂','BTTS',b.btts)
     +'</div>'+h2hhtml;
   // AI
@@ -1539,6 +1630,21 @@ function renderReport(d){
     else if(d.axga>d.hxga*1.2) defExp=d.at+' a une defense fragile (xGA='+d.axga.toFixed(2)+'). Favorise les buts de '+d.ht+'.';
     else defExp='Les deux defenses sont comparables ('+d.ht+' xGA='+d.hxga.toFixed(2)+', '+d.at+' xGA='+d.axga.toFixed(2)+').';
     expHtml += '<div style="font-size:12px;color:var(--mt);">'+defExp+'</div>';
+    expHtml += '</div>';
+  }
+
+  // Signal explanation
+  if(b.signal){
+    expHtml += '<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--bd);">';
+    expHtml += '<div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:6px;">Signal de qualite</div>';
+    if(!b.qualityOk){
+      expHtml += '<div style="font-size:12px;color:var(--rd);">Match trop ferme - xG insuffisant pour parier (besoin: DOM >= 1.2, EXT >= 1.0)</div>';
+    } else {
+      expHtml += '<div style="font-size:12px;color:var(--mt);margin-bottom:4px;">Conditions remplies: xG DOM='+b.attackH.toFixed(2)+' (seuil 1.2) | xG EXT='+b.attackA.toFixed(2)+' (seuil 1.0)</div>';
+      if(b.sigBtts)  expHtml += '<div style="font-size:12px;color:var(--gr);">BTTS signal: DOM > 1.4 + EXT > 1.2 + xGA mutuels > 1.2</div>';
+      if(b.sigOver25) expHtml += '<div style="font-size:12px;color:var(--gr);">Over 2.5 signal: total xG '+b.attackH.toFixed(2)+'+'+b.attackA.toFixed(2)+'='+(b.attackH+b.attackA).toFixed(2)+' > 2.8</div>';
+      if(b.sigOver35) expHtml += '<div style="font-size:12px;color:var(--gd);">Over 3.5 signal: total xG > 3.2</div>';
+    }
     expHtml += '</div>';
   }
 
