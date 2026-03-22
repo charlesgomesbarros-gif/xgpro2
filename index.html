@@ -293,14 +293,47 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
       </div>
     </div>
   </div>
+  <!-- FORME OPTIONNELLE -->
+  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:13px 15px;margin-bottom:13px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--ac);letter-spacing:2px;text-transform:uppercase;">Forme recente (optionnel)</div>
+      <div style="font-size:11px;color:var(--mt);">Ameliore les scores exacts</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <input type="file" accept="image/*" multiple id="formHomeInput" style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;">
+        <button type="button" onclick="document.getElementById('formHomeInput').click()" id="formHomeBtn"
+          style="width:100%;padding:9px;background:var(--sf2);border:1px dashed rgba(59,130,246,.3);border-radius:10px;color:var(--bl);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;letter-spacing:1px;transition:all .2s;">
+          📅 Forme DOM
+        </button>
+        <div id="formHomeStatus" style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:4px;text-align:center;"></div>
+      </div>
+      <div>
+        <input type="file" accept="image/*" multiple id="formAwayInput" style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;">
+        <button type="button" onclick="document.getElementById('formAwayInput').click()" id="formAwayBtn"
+          style="width:100%;padding:9px;background:var(--sf2);border:1px dashed rgba(249,115,22,.3);border-radius:10px;color:var(--or);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;letter-spacing:1px;transition:all .2s;">
+          📅 Forme EXT
+        </button>
+        <div id="formAwayStatus" style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:4px;text-align:center;"></div>
+      </div>
+    </div>
+  </div>
+
   <button class="bana" id="bana" onclick="doAnalyze()" disabled>ANALYSER LE MATCH</button>
   <div class="pgw" id="pgw"><div class="pgt"><div class="pgf" id="pgf"></div></div><div class="pgl" id="pgl">...</div></div>
   <div class="err" id="errmatch"></div>
   <div class="rep" id="rep">
     <div class="mhdr fin" id="mhdr"></div>
     <div class="tcols fin" id="tcols"></div>
-    <div class="sec fin">Buteurs Probables</div>
+    <div class="sec fin" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>Buteurs Probables</span>
+      <div style="display:flex;gap:6px;" id="scorerFilterBtns">
+        <button onclick="setScorersFilter('all',this)" class="sf-btn sf-active" style="padding:4px 10px;border-radius:8px;border:1px solid var(--ac);background:rgba(0,229,255,.1);color:var(--ac);font-family:DM Mono,monospace;font-size:10px;cursor:pointer;letter-spacing:1px;">ALL</button>
+        <button onclick="setScorersFilter('last10',this)" class="sf-btn" style="padding:4px 10px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--mt);font-family:DM Mono,monospace;font-size:10px;cursor:pointer;letter-spacing:1px;">10 MATCHS</button>
+      </div>
+    </div>
     <div class="scbox fin" id="scbox"></div>
+    <div id="scboxLast10" style="display:none;"></div>
     <div class="sec fin">Recommandations Paris</div>
     <div class="fin" id="betsbox"></div>
     <div class="aib fin" id="aibox" style="display:none">
@@ -437,6 +470,19 @@ window.addEventListener('load', function(){
   updateMemBar();
   renderStTab();
   renderScTab();
+  // Restore form buttons if form data saved
+  if(MEM.match.formHome&&MEM.match.formHome.matches){
+    var hb=document.getElementById('formHomeBtn');
+    if(hb){hb.style.border='1px solid rgba(34,211,165,.4)';hb.style.color='var(--gr)';hb.textContent='✓ Forme DOM - '+MEM.match.formHome.matches.length+' matchs';}
+    var hs=document.getElementById('formHomeStatus');
+    if(hs){hs.textContent=MEM.match.formHome.matches.length+' matchs charges';hs.style.color='var(--gr)';}
+  }
+  if(MEM.match.formAway&&MEM.match.formAway.matches){
+    var ab=document.getElementById('formAwayBtn');
+    if(ab){ab.style.border='1px solid rgba(34,211,165,.4)';ab.style.color='var(--gr)';ab.textContent='✓ Forme EXT - '+MEM.match.formAway.matches.length+' matchs';}
+    var as2=document.getElementById('formAwayStatus');
+    if(as2){as2.textContent=MEM.match.formAway.matches.length+' matchs charges';as2.style.color='var(--gr)';}
+  }
   // Update ctx status buttons if data exists
   if(Object.keys(MEM.leagues).length > 0){
     var firstLeague = Object.keys(MEM.leagues)[0];
@@ -550,6 +596,53 @@ function setupDrop(inId,files,thumbId,dropId){
 }
 setupDrop('hi',homeFiles,'hthumbs','hdrop');
 setupDrop('ai',awayFiles,'athumbs','adrop');
+
+// Form file handlers
+document.getElementById('formHomeInput').addEventListener('change', function(){
+  if(this.files&&this.files.length) handleFormUpload(Array.from(this.files),'home');
+});
+document.getElementById('formAwayInput').addEventListener('change', function(){
+  if(this.files&&this.files.length) handleFormUpload(Array.from(this.files),'away');
+});
+
+async function handleFormUpload(files, side){
+  var btn = document.getElementById('form'+(side==='home'?'Home':'Away')+'Btn');
+  var status = document.getElementById('form'+(side==='home'?'Home':'Away')+'Status');
+  btn.style.opacity='0.6';
+  status.textContent='Analyse...';
+  status.style.color='var(--ac)';
+  try {
+    var results=[];
+    for(var i=0;i<files.length;i++){
+      var b64=await toB64(files[i]);
+      var r=await callAPI(b64,files[i].type||'image/png','lastgames-'+(side==='home'?'home':'away'));
+      results.push(r);
+    }
+    // Merge matches from all pages
+    var allMatches=[];
+    results.forEach(function(r){allMatches=allMatches.concat(r.matches||[]);});
+    var formData={matches:allMatches,team:results[0]&&results[0].team||''};
+    if(side==='home'){
+      MEM.match.formHome=formData;
+      btn.style.border='1px solid rgba(34,211,165,.4)';
+      btn.style.color='var(--gr)';
+      btn.textContent='✓ Forme DOM - '+allMatches.length+' matchs';
+    } else {
+      MEM.match.formAway=formData;
+      btn.style.border='1px solid rgba(34,211,165,.4)';
+      btn.style.color='var(--gr)';
+      btn.textContent='✓ Forme EXT - '+allMatches.length+' matchs';
+    }
+    status.textContent=allMatches.length+' matchs charges';
+    status.style.color='var(--gr)';
+    saveMEM();
+    updateMemBar();
+  } catch(e){
+    status.textContent='Erreur: '+e.message;
+    status.style.color='var(--rd)';
+  }
+  btn.style.opacity='1';
+}
 
 function addFiles(newFiles,arr,thumbId){
   var i=0;
@@ -880,11 +973,29 @@ async function doAnalyze(){
       setProg(5,'Analyse domicile...');
       hm=mergeSide(await analyzeSide(homeFiles,'hthumbs'));
       if(hm&&(hm.team_xG_total||hm.home_xG)) MEM.match.hxg=hm;
+      // Auto-extract last_games from screenshot
+      if(hm&&hm.last_games&&hm.last_games.length){
+        MEM.match.formHome={matches:hm.last_games,team:hm.team_name||''};
+        var hb=document.getElementById('formHomeBtn');
+        var hs=document.getElementById('formHomeStatus');
+        if(hb){hb.style.border='1px solid rgba(34,211,165,.4)';hb.style.color='var(--gr)';hb.textContent='✓ Forme DOM - '+hm.last_games.length+' matchs (auto)';}
+        if(hs){hs.textContent=hm.last_games.length+' matchs detectes';hs.style.color='var(--gr)';}
+        saveMEM(); updateMemBar();
+      }
     }
     if(awayFiles.length){
       setProg(55,'Analyse exterieur...');
       am=mergeSide(await analyzeSide(awayFiles,'athumbs'));
       if(am&&(am.team_xG_total||am.away_xG)) MEM.match.axg=am;
+      // Auto-extract last_games from screenshot
+      if(am&&am.last_games&&am.last_games.length){
+        MEM.match.formAway={matches:am.last_games,team:am.team_name||''};
+        var ab=document.getElementById('formAwayBtn');
+        var as2=document.getElementById('formAwayStatus');
+        if(ab){ab.style.border='1px solid rgba(34,211,165,.4)';ab.style.color='var(--gr)';ab.textContent='✓ Forme EXT - '+am.last_games.length+' matchs (auto)';}
+        if(as2){as2.textContent=am.last_games.length+' matchs detectes';as2.style.color='var(--gr)';}
+        saveMEM(); updateMemBar();
+      }
     }
     updateMemBar();
     setProg(90,'Fusion...');
@@ -1115,11 +1226,12 @@ function calcValue(xgProb, odd){
 // Weighted average (recent matches weighted more)
 function weightedAvg(arr){
   if(!arr||!arr.length) return null;
-  var weights=[1,1.2,1.5,1.8,2];
-  var vals=arr.slice(-5);
+  // Weights for up to 8 matches - most recent = highest weight
+  var weights=[0.6,0.7,0.8,1.0,1.2,1.5,1.8,2.0];
+  var vals=arr.slice(-8);
   var wsum=0, vsum=0;
   vals.forEach(function(v,i){
-    var w=weights[i+(5-vals.length)]||1;
+    var w=weights[i+(8-vals.length)]||0.6;
     vsum+=v*w; wsum+=w;
   });
   return vsum/wsum;
@@ -1128,11 +1240,11 @@ function weightedAvg(arr){
 // Extract recent xG arrays from form data
 function getFormXG(formData){
   if(!formData||!formData.matches) return null;
-  return formData.matches.slice(-5).map(function(m){return parseFloat(m.xG||m.xg||0)||0;});
+  return formData.matches.slice(-8).map(function(m){return parseFloat(m.xG||m.xg||0)||0;});
 }
 function getFormXGA(formData){
   if(!formData||!formData.matches) return null;
-  return formData.matches.slice(-5).map(function(m){return parseFloat(m.xGA||m.xga||0)||0;});
+  return formData.matches.slice(-8).map(function(m){return parseFloat(m.xGA||m.xga||0)||0;});
 }
 
 function poissonOver25(lambda){
@@ -1355,7 +1467,24 @@ function renderReport(d){
     var pct=real!=null?Math.round(real)+'%':'-';
     var fw=real!=null?Math.min((real/150)*100,100):0;
     var stRow='';
-    if(stand)stRow='<div class="sr"><span class="sk">Classement</span><span class="sv">'+(stand.rank||'?')+'e - '+(stand.points||0)+'pts</span></div><div class="sr"><span class="sk">Forme</span><span class="sv">'+(stand.form||'').slice(-5)+'</span></div>';
+    if(stand)stRow='<div class="sr"><span class="sk">Classement</span><span class="sv">'+(stand.rank||'?')+'e - '+(stand.points||0)+'pts</span></div>';
+    // Add recent form from uploaded last games
+    var formData=side==='home'?MEM.match.formHome:MEM.match.formAway;
+    if(formData&&formData.matches&&formData.matches.length){
+      var recentMatches=formData.matches.slice(-8);
+      var formHtml='<div class="sr"><span class="sk">Forme recente</span><span class="sv" style="display:flex;gap:3px;">';
+      recentMatches.forEach(function(m){
+        var res=(m.result||'').toUpperCase().charAt(0);
+        var col=res==='W'?'var(--gr)':res==='L'?'var(--rd)':'var(--gd)';
+        var bg=res==='W'?'rgba(34,211,165,.2)':res==='L'?'rgba(255,77,109,.2)':'rgba(245,158,11,.15)';
+        formHtml+='<span style="width:18px;height:18px;border-radius:4px;background:'+bg+';color:'+col+';font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;">'+( res||'?')+'</span>';
+      });
+      // xG moyenne forme
+      var avgXg=recentMatches.reduce(function(a,m){return a+(parseFloat(m.xG)||0);},0)/recentMatches.length;
+      formHtml+='</span></div>';
+      formHtml+='<div class="sr"><span class="sk">xG moyen forme</span><span class="sv" style="color:var(--ac);">'+avgXg.toFixed(2)+'</span></div>';
+      stRow+=formHtml;
+    }
     return '<div class="tc tc'+side+'">'
       +'<div class="ctnm">'+nm+(side==='home'?' 🏠':' ✈️')+'</div>'
       +'<div class="sr"><span class="sk">Buts</span><span class="sv">'+(goals!=null?goals:'-')+'</span></div>'
