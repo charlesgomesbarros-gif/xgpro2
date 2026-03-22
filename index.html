@@ -1220,9 +1220,7 @@ function renderReport(d){
     +'</div>'+h2hhtml;
   // AI
   var txt=d.analysis||'';
-  if(d.vbet)txt+='
-
-Value Bet: '+d.vbet;
+  if(d.vbet)txt+='\n\nValue Bet: '+d.vbet;
   if(txt){document.getElementById('aibox').style.display='block';document.getElementById('aitx').textContent=txt;}
 
   // AUTO EXPLANATION BOX
@@ -1298,3 +1296,6 @@ Value Bet: '+d.vbet;
   expDiv.innerHTML=expHtml;
   document.getElementById('rep').appendChild(expDiv);
 }
+</script>
+</body>
+</html>
