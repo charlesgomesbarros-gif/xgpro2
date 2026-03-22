@@ -998,6 +998,53 @@ function buildMatchData(hm,am,hn,an,odds){
   });
   d.scorers=Object.values(sm).sort(function(a,b){return (b.score_probability||0)-(a.score_probability||0);}).slice(0,8);
   d.odds=odds||{};
+  // --- SET PIECE DETECTION ---
+  // Boost scorers if team is strong on set pieces
+  // Detect from team xG data: if set_piece_xG_ratio > 0.25, team is set-piece reliant
+  function getSetPieceRatio(merged){
+    if(!merged) return 0;
+    // If AI extracted set piece breakdown
+    if(merged.set_piece_xG && merged.team_xG_total){
+      return parseFloat(merged.set_piece_xG) / parseFloat(merged.team_xG_total);
+    }
+    return 0;
+  }
+
+  var homeSetPieceRatio = getSetPieceRatio(MEM.match.hxg);
+  var awaySetPieceRatio = getSetPieceRatio(MEM.match.axg);
+
+  // If opponent concedes many set pieces, also boost
+  var awaySetPieceVulnRatio = getSetPieceRatio(MEM.match.axg);
+
+  // Apply boost: if team has >25% set piece xG ratio, boost non-striker scorers by up to +15%
+  if(homeSetPieceRatio > 0.25 || awaySetPieceVulnRatio > 0.25){
+    d.scorers = d.scorers.map(function(s){
+      if(s._sd !== 'h') return s;
+      var pos = (s.position||'').toUpperCase();
+      // Boost midfielders and defenders who score on set pieces
+      if(pos === 'MID' || pos === 'M' || pos === 'DEF' || pos === 'D'){
+        var boost = Math.round(homeSetPieceRatio * 30); // up to +9% for 30% ratio
+        return Object.assign({},s,{score_probability:(s.score_probability||0)+boost, _setPiece:true});
+      }
+      return s;
+    });
+  }
+  if(awaySetPieceRatio > 0.25 || homeSetPieceRatio > 0.25){
+    d.scorers = d.scorers.map(function(s){
+      if(s._sd !== 'a') return s;
+      var pos = (s.position||'').toUpperCase();
+      if(pos === 'MID' || pos === 'M' || pos === 'DEF' || pos === 'D'){
+        var boost = Math.round(awaySetPieceRatio * 30);
+        return Object.assign({},s,{score_probability:(s.score_probability||0)+boost, _setPiece:true});
+      }
+      return s;
+    });
+  }
+  // Re-sort after boost
+  d.scorers.sort(function(a,b){return (b.score_probability||0)-(a.score_probability||0);});
+
+  d.homeSetPiece = homeSetPieceRatio;
+  d.awaySetPiece = awaySetPieceRatio;
   d.bets=computeBets(d);
   d.analysis=(hm&&hm.analysis?hm.analysis:'')+(am&&am.analysis?'\n\n'+am.analysis:'');
   d.vbet=hm&&hm.value_bet?hm.value_bet:am&&am.value_bet?am.value_bet:'';
@@ -1068,40 +1115,59 @@ function computeBets(d){
   d.hasForm=!!(wFormXgH||wFormXgA);
 
   // --- NORMALIZE xG to per-match ---
-  // Estimate games played: use goals if available, else xG/1.5 (avg EPL goals/game)
-  var gamesH = d.hs && d.hs > 5 ? Math.round(d.hs / 1.5) : (adjXgH > 5 ? Math.round(adjXgH / 1.5) : 1);
-  var gamesA = d.as && d.as > 5 ? Math.round(d.as / 1.5) : (adjXgA > 5 ? Math.round(adjXgA / 1.5) : 1);
-  gamesH = Math.max(gamesH, 1); gamesA = Math.max(gamesA, 1);
+  // Smart normalization: if xG > 5 it's a season total, divide by estimated games
+  // Best estimator: games = xG / 1.45 (league average xG per game ~1.45)
+  function toPerMatch(xgVal) {
+    if (!xgVal || xgVal <= 0) return 0;
+    if (xgVal <= 4) return xgVal; // already per-match
+    return xgVal / Math.round(xgVal / 1.45); // normalize season total
+  }
 
-  var xgPerMatchH  = adjXgH  > 3 ? adjXgH  / gamesH  : adjXgH;
-  var xgaPerMatchH = adjXgaH > 3 ? adjXgaH / gamesH  : adjXgaH;
-  var xgPerMatchA  = adjXgA  > 3 ? adjXgA  / gamesA  : adjXgA;
-  var xgaPerMatchA = adjXgaA > 3 ? adjXgaA / gamesA  : adjXgaA;
+  var xgPmH  = toPerMatch(adjXgH);
+  var xgaPmH = toPerMatch(adjXgaH);
+  var xgPmA  = toPerMatch(adjXgA);
+  var xgaPmA = toPerMatch(adjXgaA);
 
-  // --- MATCHUP: cross attack vs defense (per match) ---
-  var attackH = (xgPerMatchH + xgaPerMatchA) / 2;
-  var attackA = (xgPerMatchA + xgaPerMatchH) / 2;
-  // Clamp to reasonable range
+  // --- MATCHUP: cross attack vs defense ---
+  // Expected goals for H in this match = avg(H attack, A defense)
+  var attackH = (xgPmH + xgaPmA) / 2;
+  var attackA = (xgPmA + xgaPmH) / 2;
+
+  // Clamp to realistic per-match range
   attackH = Math.max(0.3, Math.min(attackH, 3.5));
   attackA = Math.max(0.2, Math.min(attackA, 3.5));
-  var tot=attackH+attackA;
+  var tot = attackH + attackA;
   var odds=d.odds||{};
   var b={};
 
-  // xG-based win probabilities using per-match adjusted values
-  var total=attackH+attackA||1;
-  var hWinProb = Math.min(Math.round((attackH/total)*62+15), 85);
-  var aWinProb = Math.min(Math.round((attackA/total)*58-5), 80);
-  var drawProb = Math.max(100-hWinProb-aWinProb, 8);
-  // normalize
-  var sum=hWinProb+aWinProb+drawProb;
-  hWinProb=Math.round(hWinProb/sum*100);
-  aWinProb=Math.round(aWinProb/sum*100);
-  drawProb=100-hWinProb-aWinProb;
+  // Win probabilities via Poisson simulation
+  // P(H win) = sum over all scores where H > A
+  var hWinProb=0, aWinProb=0, drawProb=0;
+  for(var si=0;si<6;si++){
+    for(var sj=0;sj<6;sj++){
+      var ph2=Math.pow(attackH,si)*Math.exp(-attackH)/factorial(si);
+      var pa2=Math.pow(attackA,sj)*Math.exp(-attackA)/factorial(sj);
+      var p=ph2*pa2;
+      if(si>sj) hWinProb+=p;
+      else if(sj>si) aWinProb+=p;
+      else drawProb+=p;
+    }
+  }
+  hWinProb=Math.round(hWinProb*100);
+  aWinProb=Math.round(aWinProb*100);
+  drawProb=Math.round(drawProb*100);
+  // normalize to 100
+  var wsum=hWinProb+aWinProb+drawProb;
+  if(wsum>0){hWinProb=Math.round(hWinProb/wsum*100);aWinProb=Math.round(aWinProb/wsum*100);drawProb=100-hWinProb-aWinProb;}
 
   // Over/BTTS using Poisson
   var overProb = tot>0 ? poissonOver25(tot) : 30;
-  var bttsProb = Math.min(Math.round((Math.min(hxg,1.5)/1.5*50)+(Math.min(axg,1.5)/1.5*50)), 85);
+  // BTTS: probability both teams score at least 1
+  // P(H scores) = 1 - P(H scores 0) = 1 - e^(-attackH)
+  // P(A scores) = 1 - P(A scores 0) = 1 - e^(-attackA)
+  var pHscores = 1 - Math.exp(-attackH);
+  var pAscores = 1 - Math.exp(-attackA);
+  var bttsProb = Math.min(Math.round(pHscores * pAscores * 100), 90);
 
   // Value calculations
   var hVal=calcValue(hWinProb, odds.home);
@@ -1116,6 +1182,7 @@ function computeBets(d){
     return ' | cote '+odd+' -> impl.'+val.implied+'% vs xG '+val.xgProb+'%'+(val.isValue?' ✓ VALUE':'');
   }
 
+  b.attackH=attackH; b.attackA=attackA;
   b.over={pct:overProb, r:'Poisson: '+overProb+'% (xG='+tot.toFixed(2)+')'+oddsInfo(overVal,odds.over)};
   b.btts={pct:bttsProb, r:''+bttsProb+'% (hxG='+hxg.toFixed(2)+' axG='+axg.toFixed(2)+')'+oddsInfo(bttsVal,odds.btts)};
   b.hw={pct:hWinProb, r:d.ht+' WIN: '+hWinProb+'%'+oddsInfo(hVal,odds.home)};
@@ -1172,6 +1239,10 @@ function renderReport(d){
   document.getElementById('rep').style.display='block';
   window.scrollTo({top:document.getElementById('rep').offsetTop-20,behavior:'smooth'});
   // Match header
+  var adjXgInfo='';
+  if(d.bets&&d.bets.attackH){
+    adjXgInfo='<div style="font-size:10px;color:var(--ac);font-family:DM Mono,monospace;margin-top:4px;">xG/match ajuste: '+d.ht+' '+d.bets.attackH.toFixed(2)+' | '+d.at+' '+d.bets.attackA.toFixed(2)+(d.bets.hasForm?' | Forme ponderee active':'')+'</div>';
+  }
   var standRow='';
   if(d.hstand||d.astand){
     standRow='<div style="display:flex;gap:12px;justify-content:center;margin-top:7px;flex-wrap:wrap;">';
@@ -1179,7 +1250,10 @@ function renderReport(d){
     if(d.astand)standRow+='<span style="font-size:11px;color:var(--or);font-family:DM Mono,monospace;">'+d.at+' - '+(d.astand.rank||'?')+'e - '+(d.astand.points||0)+'pts</span>';
     standRow+='</div>';
   }
-  document.getElementById('mhdr').innerHTML='<div class="mvs"><span class="hn">'+d.ht+'</span><span class="sn">'+(d.hs!=null?d.hs:'?')+'</span><span class="vs">-</span><span class="sn">'+(d.as!=null?d.as:'?')+'</span><span class="an">'+d.at+'</span></div><div class="mmeta">xG total: '+(d.tot?d.tot.toFixed(2):'-')+(d.h2h&&d.h2h.length?' - '+d.h2h.length+' H2H':'')+'</div>'+standRow;
+  // Show adjusted xG per match if available
+  var adjInfo='';
+  if(d.bets&&d.bets.attackH) adjInfo=' | xG/match: '+d.bets.attackH.toFixed(2)+' vs '+d.bets.attackA.toFixed(2);
+  document.getElementById('mhdr').innerHTML='<div class="mvs"><span class="hn">'+d.ht+'</span><span class="sn">'+(d.hs!=null?d.hs:'?')+'</span><span class="vs">-</span><span class="sn">'+(d.as!=null?d.as:'?')+'</span><span class="an">'+d.at+'</span></div><div class="mmeta">xG total: '+(d.tot?d.tot.toFixed(2):'-')+(d.h2h&&d.h2h.length?' - '+d.h2h.length+' H2H':'')+'</div>'+adjXgInfo+standRow;
   // Team cards
   function tcard(nm,goals,xg,xga,real,status,side,stand){
     var sc2=rCls(real),bc2=bCls(real);
@@ -1211,6 +1285,7 @@ function renderReport(d){
       var rk=i===0?'r1':i===1?'r2':i===2?'r3':'rx';
       var xgv=s.xG?(typeof s.xG.toFixed==='function'?s.xG.toFixed(2):String(s.xG)):'-';
       var sbd=s._sd==='h'?('<span class="tbdg hbdg">'+d.ht+'</span>'):('<span class="tbdg abdg">'+d.at+'</span>');
+      if(s._setPiece) sbd+='<span class="tbdg" style="background:rgba(245,158,11,.15);color:var(--gd);font-size:9px;">CPA+</span>';
       var scEdgeHtml='';
       // Check if user entered a cote for this scorer
       var scorerCote=parseFloat(document.getElementById('scote'+(i+1))||{value:''}.value)||null;
@@ -1250,9 +1325,29 @@ function renderReport(d){
     var pct=bet.pct||0;
     var col=pctColor(pct);
     var hot=pct>=55;
+    // Extract edge from bet.r if available
+    var edgeHtml='';
+    if(bet.r&&bet.r.indexOf('VALUE')>=0){
+      var edgeMatch=bet.r.match(/impl\.([0-9.]+)%/);
+      var implPct=edgeMatch?parseFloat(edgeMatch[1]):null;
+      if(implPct){
+        var edge=Math.round((pct-implPct)*10)/10;
+        var edgeCol=edge>5?'var(--gr)':edge>0?'var(--gd)':'var(--mt)';
+        edgeHtml='<div style="font-size:10px;color:'+edgeCol+';margin-top:2px;font-family:DM Mono,monospace;">edge '+(edge>0?'+':'')+edge+'%</div>';
+      }
+    } else if(bet.r&&bet.r.indexOf('impl.')>=0){
+      var edgeMatch2=bet.r.match(/impl\.([0-9.]+)%/);
+      var implPct2=edgeMatch2?parseFloat(edgeMatch2[1]):null;
+      if(implPct2){
+        var edge2=Math.round((pct-implPct2)*10)/10;
+        var edgeCol2=edge2>5?'var(--gr)':edge2>0?'var(--gd)':'var(--rd)';
+        edgeHtml='<div style="font-size:10px;color:'+edgeCol2+';margin-top:2px;font-family:DM Mono,monospace;">edge '+(edge2>0?'+':'')+edge2+'%</div>';
+      }
+    }
     return '<div class="bch'+(hot?' hot':'')+'"><div class="bci">'+icon+'</div><div class="bcn">'+lbl+'</div>'
       +'<div style="font-family:Bebas Neue,sans-serif;font-size:26px;letter-spacing:1px;color:'+col+';">'+pct+'%</div>'
       +'<div style="height:3px;border-radius:2px;background:rgba(255,255,255,.05);margin:4px 0;overflow:hidden;"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+col+';border-radius:2px;"></div></div>'
+      +edgeHtml
       +(bet.r?'<div class="bcr" style="font-size:9px;">'+bet.r+'</div>':'')
       +'</div>';
   }
@@ -1409,6 +1504,15 @@ function renderReport(d){
     expHtml += '<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--bd);">';
     expHtml += '<div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:6px;">Aucune value detectee</div>';
     expHtml += '<div style="font-size:12px;color:var(--mt);">Les cotes semblent correctement calibrees par rapport aux xG. Edge < 5% sur tous les paris.</div>';
+    expHtml += '</div>';
+  }
+
+  // Set piece info
+  if(d.homeSetPiece>0.25||d.awaySetPiece>0.25){
+    expHtml += '<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--bd);">';
+    expHtml += '<div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:6px;">Coups de pied arretes (CPA)</div>';
+    if(d.homeSetPiece>0.25) expHtml += '<div style="font-size:12px;color:var(--gd);margin-bottom:3px;">'+d.ht+' : '+Math.round(d.homeSetPiece*100)+'% du xG sur CPA - milieux/defenseurs boostes (badge CPA+)</div>';
+    if(d.awaySetPiece>0.25) expHtml += '<div style="font-size:12px;color:var(--gd);">'+d.at+' : '+Math.round(d.awaySetPiece*100)+'% du xG sur CPA</div>';
     expHtml += '</div>';
   }
 
