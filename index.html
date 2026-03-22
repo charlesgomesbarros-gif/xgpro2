@@ -966,6 +966,12 @@ function buildMatchData(hm,am,hn,an,odds){
     if(!xg90 && s.xG && s.apps) xg90 = parseFloat(s.xG) / parseFloat(s.apps);
     return Math.min(Math.round(xg90 * 100), 75);
   }
+  function scorerEdge(pct, cote){
+    if(!cote||!pct) return null;
+    var impl = 100/cote;
+    var edge = pct - impl;
+    return {edge: Math.round(edge*10)/10, impl: Math.round(impl*10)/10, isValue: edge > 5};
+  }
   var hs=(hm?hm.top_scorers||[]:[]).map(function(s){
     var pct=calcScorePct(s);
     return Object.assign({},s,{_sd:'h',score_probability:pct||s.score_probability||0});
@@ -1112,10 +1118,24 @@ function renderReport(d){
       var rk=i===0?'r1':i===1?'r2':i===2?'r3':'rx';
       var xgv=s.xG?(typeof s.xG.toFixed==='function'?s.xG.toFixed(2):String(s.xG)):'-';
       var sbd=s._sd==='h'?('<span class="tbdg hbdg">'+d.ht+'</span>'):('<span class="tbdg abdg">'+d.at+'</span>');
+      var scEdgeHtml='';
+      // Check if user entered a cote for this scorer
+      var scorerCote=parseFloat(document.getElementById('scote'+(i+1))||{value:''}.value)||null;
+      if(scorerCote){
+        var se=scorerEdge(pct,scorerCote);
+        if(se) scEdgeHtml='<span style="font-size:10px;margin-left:6px;color:'+(se.isValue?'var(--gr)':'var(--mt)')+';">'+(se.edge>0?'+':'')+se.edge+'% edge</span>';
+      }
       schtml+='<div class="sci"><div class="scr '+rk+'">'+(i+1)+'</div>'
-        +'<div style="flex:1"><div class="scnm">'+(s.name||'-')+' '+sbd+'</div>'
-        +'<div class="scsb">'+(s.goals||0)+' buts - xG '+xgv+' - '+(s.apps||0)+' matchs</div></div>'
-        +'<div class="scp"><div class="scpv '+cls+'">'+pct+'%</div><div class="spb"><div class="spf '+fcls+'" style="width:'+pct+'%"></div></div></div>'
+        +'<div style="flex:1"><div class="scnm">'+(s.name||'-')+' '+sbd+scEdgeHtml+'</div>'
+        +'<div class="scsb">'+(s.goals||0)+' buts - xG '+xgv+' - '+(s.apps||0)+' matchs'
+        +(pct>0?' - xG90: '+(s.xG90?parseFloat(s.xG90).toFixed(2):'-'):'')+'</div></div>'
+        +'<div class="scp">'
+        +'<div class="scpv '+cls+'">'+pct+'%</div>'
+        +'<div class="spb"><div class="spf '+fcls+'" style="width:'+pct+'%"></div></div>'
+        +'<input id="scote'+(i+1)+'" type="number" step="0.01" min="1" placeholder="cote" '
+        +'style="width:52px;background:var(--sf2);border:1px solid var(--bd);border-radius:5px;padding:3px 5px;color:var(--gd);font-size:10px;font-family:DM Mono,monospace;outline:none;margin-top:4px;" '
+        +'onchange="updateScoreEdge('+i+')" title="Entre la cote bookmaker pour calculer l'edge">'
+        +'</div>'
         +'</div>';
     });
   } else {
@@ -1200,8 +1220,84 @@ function renderReport(d){
     +'</div>'+h2hhtml;
   // AI
   var txt=d.analysis||'';
-  if(d.vbet)txt+='\n\nValue Bet: '+d.vbet;
+  if(d.vbet)txt+='
+
+Value Bet: '+d.vbet;
   if(txt){document.getElementById('aibox').style.display='block';document.getElementById('aitx').textContent=txt;}
+
+  // AUTO EXPLANATION BOX
+  var expHtml='<div style="background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:15px;margin-top:12px;">';
+  expHtml+='<div style="font-family:Bebas Neue,sans-serif;font-size:15px;letter-spacing:2px;color:var(--ac);margin-bottom:12px;">📖 Comment interpreter cette analyse ?</div>';
+
+  // Realisation explanation
+  if(d.hr!=null||d.ar!=null){
+    expHtml+='<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--bd);">';
+    expHtml+='<div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:6px;">📊 Realisation (buts / xG × 100)</div>';
+    if(d.hr!=null){
+      var hrExp='';
+      if(d.hr>110) hrExp=d.ht+' surperforme ('+Math.round(d.hr)+'%) — marque plus que prevu. Risque de regression, cote potentiellement surestimee.';
+      else if(d.hr<90) hrExp=d.ht+' sous-performe ('+Math.round(d.hr)+'%) — rate des occasions. Peut rattraper, potentiellement sous-cotee.';
+      else hrExp=d.ht+' dans la norme ('+Math.round(d.hr)+'%) — performance conforme aux xG.';
+      expHtml+='<div style="font-size:12px;color:var(--mt);margin-bottom:4px;">'+hrExp+'</div>';
+    }
+    if(d.ar!=null){
+      var arExp='';
+      if(d.ar>110) arExp=d.at+' surperforme ('+Math.round(d.ar)+'%) — risque de regression.';
+      else if(d.ar<90) arExp=d.at+' sous-performe ('+Math.round(d.ar)+'%) — peut se reveiller statistiquement.';
+      else arExp=d.at+' dans la norme ('+Math.round(d.ar)+'%).';
+      expHtml+='<div style="font-size:12px;color:var(--mt);">'+arExp+'</div>';
+    }
+    expHtml+='</div>';
+  }
+
+  // Edge explanation
+  if(b.values&&b.values.length){
+    expHtml+='<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--bd);">';
+    expHtml+='<div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:6px;">✅ Value Bets detectees</div>';
+    expHtml+='<div style="font-size:12px;color:var(--mt);margin-bottom:6px;">Un edge positif signifie que la probabilite xG depasse la probabilite implicite du bookmaker. Edge > 5% = value potentielle.</div>';
+    b.values.forEach(function(v){
+      expHtml+='<div style="font-size:12px;color:var(--gr);margin-bottom:3px;">• '+v.label+': xG '+v.val.xgProb+'% vs bookmaker '+v.val.implied+'% → tu as '+v.val.edge+'% d'avantage</div>';
+    });
+    expHtml+='</div>';
+  } else if(d.odds&&(d.odds.home||d.odds.away)){
+    expHtml+='<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--bd);">';
+    expHtml+='<div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:6px;">📉 Aucune value detectee</div>';
+    expHtml+='<div style="font-size:12px;color:var(--mt);">Les cotes du bookmaker semblent correctement calibrees par rapport aux xG. Edge < 5% sur tous les paris.</div>';
+    expHtml+='</div>';
+  }
+
+  // xGA explanation
+  if(d.hxga!=null&&d.axga!=null){
+    expHtml+='<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--bd);">';
+    expHtml+='<div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:6px;">🛡️ Solidite defensive (xGA)</div>';
+    var defExp='';
+    if(d.hxga>d.axga*1.2) defExp=d.ht+' a une defense fragile (xGA='+d.hxga.toFixed(2)+') face a '+d.at+' qui concede moins (xGA='+d.axga.toFixed(2)+'). Favorise les buts de '+d.at+'.';
+    else if(d.axga>d.hxga*1.2) defExp=d.at+' a une defense fragile (xGA='+d.axga.toFixed(2)+'). Favorise les buts de '+d.ht+'.';
+    else defExp='Les deux defenses sont comparables ('+d.ht+' xGA='+d.hxga.toFixed(2)+', '+d.at+' xGA='+d.axga.toFixed(2)+').';
+    expHtml+='<div style="font-size:12px;color:var(--mt);">'+defExp+'</div>';
+    expHtml+='</div>';
+  }
+
+  // BTTS/Over logic
+  expHtml+='<div>';
+  expHtml+='<div style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:6px;">⚽ OVER 2.5 & BTTS</div>';
+  expHtml+='<div style="font-size:12px;color:var(--mt);">';
+  expHtml+='OVER 2.5 = plus de 2 buts dans le match (calculé via distribution de Poisson sur xG total='+d.tot.toFixed(2)+'). ';
+  expHtml+='BTTS = les deux equipes marquent chacune au moins 1 but. ';
+  if(d.tot>=3) expHtml+='xG total eleve → match tres ouvert, favorise OVER et BTTS.';
+  else if(d.tot>=2) expHtml+='xG modere → match equilibre.';
+  else expHtml+='xG faible → match ferme, favorise Under et 0-0.';
+  expHtml+='</div></div>';
+
+  expHtml+='</div>';
+
+  // Insert explanation after aibox
+  var existingExp=document.getElementById('expbox');
+  if(existingExp) existingExp.remove();
+  var expDiv=document.createElement('div');
+  expDiv.id='expbox';
+  expDiv.innerHTML=expHtml;
+  document.getElementById('rep').appendChild(expDiv);
 }
 </script>
 </body>
