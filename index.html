@@ -882,7 +882,7 @@ async function doAnalyze(){
     await new Promise(function(r){setTimeout(r,200);});
     document.getElementById('pgw').style.display='none';
     document.getElementById('bana').disabled=false;
-    renderReport(d);
+    window._lastMatchData=d; renderReport(d);
   }catch(e){
     document.getElementById('pgw').style.display='none';
     document.getElementById('bana').disabled=false;
@@ -1067,17 +1067,31 @@ function computeBets(d){
   d.adjXgA=Math.round(adjXgA*100)/100;
   d.hasForm=!!(wFormXgH||wFormXgA);
 
-  // --- MATCHUP: cross attack vs defense ---
-  var attackH=(adjXgH + adjXgaA)/2;
-  var attackA=(adjXgA + adjXgaH)/2;
+  // --- NORMALIZE xG to per-match ---
+  // Estimate games played: use goals if available, else xG/1.5 (avg EPL goals/game)
+  var gamesH = d.hs && d.hs > 5 ? Math.round(d.hs / 1.5) : (adjXgH > 5 ? Math.round(adjXgH / 1.5) : 1);
+  var gamesA = d.as && d.as > 5 ? Math.round(d.as / 1.5) : (adjXgA > 5 ? Math.round(adjXgA / 1.5) : 1);
+  gamesH = Math.max(gamesH, 1); gamesA = Math.max(gamesA, 1);
+
+  var xgPerMatchH  = adjXgH  > 3 ? adjXgH  / gamesH  : adjXgH;
+  var xgaPerMatchH = adjXgaH > 3 ? adjXgaH / gamesH  : adjXgaH;
+  var xgPerMatchA  = adjXgA  > 3 ? adjXgA  / gamesA  : adjXgA;
+  var xgaPerMatchA = adjXgaA > 3 ? adjXgaA / gamesA  : adjXgaA;
+
+  // --- MATCHUP: cross attack vs defense (per match) ---
+  var attackH = (xgPerMatchH + xgaPerMatchA) / 2;
+  var attackA = (xgPerMatchA + xgaPerMatchH) / 2;
+  // Clamp to reasonable range
+  attackH = Math.max(0.3, Math.min(attackH, 3.5));
+  attackA = Math.max(0.2, Math.min(attackA, 3.5));
   var tot=attackH+attackA;
   var odds=d.odds||{};
   var b={};
 
-  // xG-based win probabilities (Dixon-Coles inspired)
-  var total=hxg+axg||1;
-  var hWinProb = Math.min(Math.round((hxg/total)*62+15), 85);
-  var aWinProb = Math.min(Math.round((axg/total)*58-5), 80);
+  // xG-based win probabilities using per-match adjusted values
+  var total=attackH+attackA||1;
+  var hWinProb = Math.min(Math.round((attackH/total)*62+15), 85);
+  var aWinProb = Math.min(Math.round((attackA/total)*58-5), 80);
   var drawProb = Math.max(100-hWinProb-aWinProb, 8);
   // normalize
   var sum=hWinProb+aWinProb+drawProb;
@@ -1120,7 +1134,7 @@ function computeBets(d){
   }
   var scArr=Object.keys(scMap).map(function(k){return {score:k,pct:scMap[k]};});
   scArr.sort(function(a,b2){return b2.pct-a.pct;});
-  b.exactScores=scArr.slice(0,5);
+  b.exactScores=scArr.slice(0,3);
 
   // Over 3.5 and 4.5
   b.over35pct=poissonOver35(tot);
@@ -1255,32 +1269,54 @@ function renderReport(d){
   var exactHtml='';
   if(b.exactScores&&b.exactScores.length){
     exactHtml='<div style="background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:14px;margin-bottom:12px;">';
-    exactHtml+='<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Scores probables</div>';
-    exactHtml+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">';
+    exactHtml+='<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Scores probables (Poisson)</div>';
+
+    // Top 3 scores with edge if cote available
+    exactHtml+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">';
     b.exactScores.forEach(function(s,i){
       var col=i===0?'var(--ac)':i===1?'var(--gd)':'var(--mt)';
-      exactHtml+='<div style="background:var(--sf2);border-radius:10px;padding:10px 14px;text-align:center;flex:1;min-width:70px;">';
-      exactHtml+='<div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:'+col+';">'+s.score+'</div>';
-      exactHtml+='<div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;">'+s.pct+'%</div>';
+      // Try to get score cote from input
+      var scoreCoteEl=document.getElementById('scorecote'+i);
+      var scoreCote=scoreCoteEl?parseFloat(scoreCoteEl.value)||null:null;
+      var edgeTxt='';
+      if(scoreCote){
+        var impl=100/scoreCote;
+        var edge=Math.round((s.pct-impl)*10)/10;
+        var edgeCol=edge>5?'var(--gr)':'var(--mt)';
+        edgeTxt='<div style="font-size:10px;color:'+edgeCol+';margin-top:2px;">'+(edge>0?'+':'')+edge+'% edge</div>';
+      }
+      exactHtml+='<div style="background:var(--sf2);border-radius:10px;padding:10px;text-align:center;position:relative;">';
+      exactHtml+='<div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:'+col+';">'+s.score+'</div>';
+      exactHtml+='<div style="font-size:12px;color:var(--mt);font-family:DM Mono,monospace;font-weight:600;">'+s.pct+'%</div>';
+      exactHtml+=edgeTxt;
+      exactHtml+='<input id="scorecote'+i+'" type="number" step="0.01" min="1" placeholder="cote" onchange="refreshExact()" ';
+      exactHtml+='style="width:100%;margin-top:6px;background:var(--sf);border:1px solid var(--bd);border-radius:5px;padding:4px 6px;color:var(--gd);font-size:10px;font-family:DM Mono,monospace;outline:none;">';
       exactHtml+='</div>';
     });
     exactHtml+='</div>';
-    exactHtml+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+
+    // Over rows with edge
+    exactHtml+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">';
     var overs=[
-      {label:'OVER 2.5',pct:b.over?b.over.pct:0},
-      {label:'OVER 3.5',pct:b.over35pct||0},
-      {label:'OVER 4.5',pct:b.over45pct||0},
+      {label:'OVER 2.5',pct:b.over?b.over.pct:0,val:b.over&&b.over.pct?calcValue(b.over.pct,d.odds&&d.odds.over):null,odd:d.odds&&d.odds.over},
+      {label:'OVER 3.5',pct:b.over35pct||0,val:null,odd:null},
+      {label:'OVER 4.5',pct:b.over45pct||0,val:null,odd:null},
     ];
     overs.forEach(function(o){
       var col=o.pct>=65?'var(--gr)':o.pct>=45?'var(--gd)':'var(--mt)';
-      exactHtml+='<div style="background:var(--sf2);border-radius:8px;padding:7px 12px;flex:1;text-align:center;">';
-      exactHtml+='<div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:2px;">'+o.label+'</div>';
-      exactHtml+='<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:'+col+';">'+o.pct+'%</div>';
+      var edgeTxt='';
+      if(o.val&&o.val.isValue) edgeTxt='<div style="font-size:10px;color:var(--gr);">+'+o.val.edge+'% edge</div>';
+      else if(o.odd) edgeTxt='<div style="font-size:10px;color:var(--mt);">impl. '+Math.round(100/o.odd)+'%</div>';
+      exactHtml+='<div style="background:var(--sf2);border-radius:8px;padding:9px;text-align:center;">';
+      exactHtml+='<div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:3px;">'+o.label+'</div>';
+      exactHtml+='<div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:'+col+';">'+o.pct+'%</div>';
+      exactHtml+=edgeTxt;
       exactHtml+='</div>';
     });
     exactHtml+='</div>';
-    if(b.hasForm) exactHtml+='<div style="font-size:10px;color:var(--gr);font-family:DM Mono,monospace;margin-top:8px;">Forme recente integree (moyenne ponderee 5 matchs)</div>';
-    else exactHtml+='<div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:8px;">Upload Forme DOM/EXT dans Donnees pour affiner</div>';
+
+    if(b.hasForm) exactHtml+='<div style="font-size:10px;color:var(--gr);font-family:DM Mono,monospace;">Forme recente ponderee active</div>';
+    else exactHtml+='<div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;">Upload Forme DOM/EXT pour affiner les scores</div>';
     exactHtml+='</div>';
   }
 
