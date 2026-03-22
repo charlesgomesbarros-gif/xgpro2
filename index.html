@@ -1072,8 +1072,8 @@ function buildMatchData(hm,am,hn,an,odds){
   d.homeSetPiece = homeSetPieceRatio;
   d.awaySetPiece = awaySetPieceRatio;
   d.bets=computeBets(d);
-  d.analysis=(hm&&hm.analysis?hm.analysis:'')+(am&&am.analysis?'\n\n'+am.analysis:'');
-  d.vbet=hm&&hm.value_bet?hm.value_bet:am&&am.value_bet?am.value_bet:'';
+  d.analysis=''; // Tipster API generates the coherent analysis
+  d.vbet='';
   d.h2h=MEM.match.h2h&&MEM.match.h2h.matches?MEM.match.h2h.matches:[];
   return d;
 }
