@@ -532,16 +532,25 @@ setupDrop('hi',homeFiles,'hthumbs','hdrop');
 setupDrop('ai',awayFiles,'athumbs','adrop');
 
 function addFiles(newFiles,arr,thumbId){
-  newFiles.forEach(function(file){
+  var i=0;
+  function processNext(){
+    if(i>=newFiles.length) return;
+    var file=newFiles[i++];
     var url=URL.createObjectURL(file);
     var reader=new FileReader();
     reader.onload=function(e){
-      arr.push({file:file,b64:e.target.result.split(',')[1],mt:file.type||'image/png',url:url,status:'pending'});
+      var result=e.target.result||e.currentTarget.result;
+      if(!result) { processNext(); return; }
+      var b64=result.indexOf(',')>=0?result.split(',')[1]:result;
+      arr.push({file:file,b64:b64,mt:file.type||'image/jpeg',url:url,status:'pending'});
       renderThumbs(arr,thumbId);
       document.getElementById('bana').disabled=(!homeFiles.length&&!awayFiles.length);
+      processNext();
     };
+    reader.onerror=function(){processNext();};
     reader.readAsDataURL(file);
-  });
+  }
+  processNext();
 }
 
 function removeFile(arr,idx,thumbId){arr.splice(idx,1);renderThumbs(arr,thumbId);}
