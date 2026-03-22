@@ -37,9 +37,7 @@ REPONDS EN JSON VALIDE uniquement :
   "type": "lineup",
   "team": "nom equipe",
   "formation": "4-3-3",
-  "players": [
-    {"name": "Nom Joueur", "number": 0, "position": "GK|DEF|MID|ATT", "starting": true}
-  ]
+  "players": [{"name": "Nom Joueur", "number": 0, "position": "GK|DEF|MID|ATT", "starting": true}]
 }`,
 
       "lineup-away": `Analyse ce screenshot de composition equipe. Extrais tous les joueurs.
@@ -48,31 +46,7 @@ REPONDS EN JSON VALIDE uniquement :
   "type": "lineup",
   "team": "nom equipe",
   "formation": "4-3-3",
-  "players": [
-    {"name": "Nom Joueur", "number": 0, "position": "GK|DEF|MID|ATT", "starting": true}
-  ]
-}`,
-
-      "lastgames-home": `Analyse ce screenshot des derniers matchs d une equipe (Last games Understat).
-Extrais les 5 derniers matchs avec xG et xGA de chaque match.
-REPONDS EN JSON VALIDE uniquement :
-{
-  "type": "lastgames",
-  "team": "nom equipe",
-  "matches": [
-    {"date": "2025-01-15", "opponent": "Equipe", "home": true, "xG": 1.8, "xGA": 1.2, "goals": 2, "goalsAgainst": 1, "result": "W"}
-  ]
-}`,
-
-      "lastgames-away": `Analyse ce screenshot des derniers matchs d une equipe (Last games Understat).
-Extrais les 5 derniers matchs avec xG et xGA de chaque match.
-REPONDS EN JSON VALIDE uniquement :
-{
-  "type": "lastgames",
-  "team": "nom equipe",
-  "matches": [
-    {"date": "2025-01-15", "opponent": "Equipe", "home": false, "xG": 1.3, "xGA": 1.6, "goals": 1, "goalsAgainst": 2, "result": "L"}
-  ]
+  "players": [{"name": "Nom Joueur", "number": 0, "position": "GK|DEF|MID|ATT", "starting": true}]
 }`,
 
       h2h: `Analyse ce screenshot de confrontations directes H2H. Extrais tous les matchs visibles.
@@ -81,20 +55,48 @@ REPONDS EN JSON VALIDE uniquement :
   "type": "h2h",
   "team1": "Equipe 1",
   "team2": "Equipe 2",
-  "matches": [
-    {"date": "2024-01-15", "home": "Equipe", "away": "Equipe", "homeGoals": 0, "awayGoals": 0}
-  ]
+  "matches": [{"date": "2024-01-15", "home": "Equipe", "away": "Equipe", "homeGoals": 0, "awayGoals": 0}]
 }`,
 
-      understat: `Tu es expert xG football. Analyse ce screenshot Understat.
+      "lastgames-home": `Analyse ce screenshot des derniers matchs d une equipe (Last games Understat).
+Extrais les 5 derniers matchs avec xG et xGA de chaque match.
+REPONDS EN JSON VALIDE uniquement :
+{
+  "type": "lastgames",
+  "team": "nom equipe",
+  "matches": [{"date": "2025-01-15", "opponent": "Equipe", "home": true, "xG": 1.8, "xGA": 1.2, "goals": 2, "goalsAgainst": 1, "result": "W"}]
+}`,
 
-TYPES DE PAGES POSSIBLES :
-- Page equipe (tableau par situation: Open play, Corner, Set piece...) : ADDITIONNE toutes les lignes xG et GA
+      "lastgames-away": `Analyse ce screenshot des derniers matchs d une equipe (Last games Understat).
+Extrais les 5 derniers matchs avec xG et xGA de chaque match.
+REPONDS EN JSON VALIDE uniquement :
+{
+  "type": "lastgames",
+  "team": "nom equipe",
+  "matches": [{"date": "2025-01-15", "opponent": "Equipe", "home": false, "xG": 1.3, "xGA": 1.6, "goals": 1, "goalsAgainst": 2, "result": "L"}]
+}`,
+
+      understat: `Tu es un tipster professionnel expert en xG football. Analyse ce screenshot Understat.
+
+TYPES DE PAGES :
+- Page equipe (tableau situations: Open play, Corner, Set piece...) : ADDITIONNE toutes les lignes xG
 - Page match : xG domicile vs exterieur
 - Page joueurs : liste avec stats individuelles
 
-POUR LES JOUEURS : extrais imperativement xG90 (colonne xG90 du tableau Understat).
-xG90 = expected goals par 90 minutes. C'est la stat cle pour les probabilites de marquer.
+POUR LES JOUEURS : extrais xG90 (colonne xG90 - expected goals par 90 min).
+POUR PAGE EQUIPE : extrais aussi separement open_play_xG, set_piece_xG (Corner + Set piece + Freekick), corner_xG, freekick_xG.
+
+POUR L ANALYSE : structure comme un tipster pro en 4 etapes :
+1. Dynamique des equipes (attaque, defense, forme)
+2. Interpretation des stats cles (xG, xGA, efficacite, faiblesses)
+3. Analyse probabilites et edges (value bets, cotes interessantes)
+4. Conclusion CLAIRE avec meilleur pari, confiance, justification
+
+Format attendu pour le champ "analysis" :
+Analyse : (texte court sur la dynamique)
+Value Bet : (ex: BTTS / Over 2.5 / victoire equipe X)
+Confiance : (ex: 7/10)
+A eviter : (ex: Over 3.5 trop risque)
 
 REPONDS EN JSON VALIDE uniquement, sans texte avant ou apres :
 {
@@ -112,25 +114,25 @@ REPONDS EN JSON VALIDE uniquement, sans texte avant ou apres :
   "team_xGA_total": null,
   "team_goals_total": null,
   "team_goals_against_total": null,
+  "open_play_xG": null,
+  "set_piece_xG": null,
+  "corner_xG": null,
+  "freekick_xG": null,
   "home_realization": null,
   "away_realization": null,
   "home_status": null,
   "away_status": null,
   "total_xG": null,
-  "open_play_xG": null,
-  "set_piece_xG": null,
-  "corner_xG": null,
-  "freekick_xG": null,
   "top_scorers": [
     {"name": "", "goals": 0, "xG": 0.00, "xG90": 0.00, "xA90": 0.00, "apps": 0, "minutes": 0, "position": "", "score_probability": 0}
   ],
   "bets": {
-    "over": {"confidence": "haute|moyenne|faible", "reason": ""},
-    "btts": {"confidence": "haute|moyenne|faible", "reason": ""},
+    "over":     {"confidence": "haute|moyenne|faible", "reason": ""},
+    "btts":     {"confidence": "haute|moyenne|faible", "reason": ""},
     "home_win": {"confidence": "haute|moyenne|faible", "reason": ""},
     "away_win": {"confidence": "haute|moyenne|faible", "reason": ""}
   },
-  "analysis": "3-4 phrases en francais sur la forme, forces/faiblesses offensives et defensives",
+  "analysis": "Analyse: ...\nValue Bet: ...\nConfiance: X/10\nA eviter: ...",
   "value_bet": "",
   "data_confidence": "haute|moyenne|faible"
 }`
@@ -147,7 +149,7 @@ REPONDS EN JSON VALIDE uniquement, sans texte avant ou apres :
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2500,
+        max_tokens: 3000,
         messages: [{ role: 'user', content: [
           { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/png', data: image } },
           { type: 'text', text: prompt }
@@ -176,9 +178,9 @@ REPONDS EN JSON VALIDE uniquement, sans texte avant ou apres :
       }
     }
 
-    // Calculate score_probability from xG90 for each scorer
+    // Calculate score_probability from xG90
     if (parsed.top_scorers && parsed.top_scorers.length) {
-      parsed.top_scorers = parsed.top_scorers.map(function(s) {
+      parsed.top_scorers = parsed.top_scorers.map(s => {
         if (!s.score_probability || s.score_probability === 0) {
           const xg90 = s.xG90 ? parseFloat(s.xG90) : (s.xG && s.apps ? parseFloat(s.xG) / s.apps : 0);
           s.score_probability = Math.min(Math.round(xg90 * 100), 75);
