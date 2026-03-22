@@ -59,7 +59,7 @@ REPONDS EN JSON VALIDE uniquement :
 }`,
 
       "lastgames-home": `Analyse ce screenshot des derniers matchs d une equipe (Last games Understat).
-Extrais les 5 derniers matchs avec xG et xGA de chaque match.
+Extrais les 8 derniers matchs visibles avec xG et xGA de chaque match.
 REPONDS EN JSON VALIDE uniquement :
 {
   "type": "lastgames",
@@ -68,7 +68,7 @@ REPONDS EN JSON VALIDE uniquement :
 }`,
 
       "lastgames-away": `Analyse ce screenshot des derniers matchs d une equipe (Last games Understat).
-Extrais les 5 derniers matchs avec xG et xGA de chaque match.
+Extrais les 8 derniers matchs visibles avec xG et xGA de chaque match.
 REPONDS EN JSON VALIDE uniquement :
 {
   "type": "lastgames",
@@ -78,13 +78,17 @@ REPONDS EN JSON VALIDE uniquement :
 
       understat: `Tu es un tipster professionnel expert en xG football. Analyse ce screenshot Understat.
 
-TYPES DE PAGES :
-- Page equipe (tableau situations: Open play, Corner, Set piece...) : ADDITIONNE toutes les lignes xG
-- Page match : xG domicile vs exterieur
-- Page joueurs : liste avec stats individuelles
+CE SCREENSHOT PEUT CONTENIR PLUSIEURS SECTIONS :
 
-POUR LES JOUEURS : extrais xG90 (colonne xG90 - expected goals par 90 min).
-POUR PAGE EQUIPE : extrais aussi separement open_play_xG, set_piece_xG (Corner + Set piece + Freekick), corner_xG, freekick_xG.
+1. DERNIERS MATCHS (mini cartes en haut avec date, H/A, score, xG, xGA) :
+   Extrais TOUS les matchs visibles - c est une priorite !
+   Le resultat W/D/L = deduit du score (goals vs goalsAgainst).
+
+2. TABLEAU SITUATION (Open play, Corner, Set piece...) :
+   ADDITIONNE toutes les lignes pour team_xG_total.
+   Extrais separement : open_play_xG, set_piece_xG (Corner+Set piece+Freekick), corner_xG, freekick_xG.
+
+3. JOUEURS : extrais xG90 imperativement (expected goals par 90 min).
 
 POUR L ANALYSE : structure comme un tipster pro en 4 etapes :
 1. Dynamique des equipes (attaque, defense, forme)
@@ -123,6 +127,9 @@ REPONDS EN JSON VALIDE uniquement, sans texte avant ou apres :
   "home_status": null,
   "away_status": null,
   "total_xG": null,
+  "last_games": [
+    {"date": "2026-01-31", "opponent": "Equipe", "home": true, "goals": 0, "goalsAgainst": 0, "xG": 0.00, "xGA": 0.00, "result": "W|D|L"}
+  ],
   "top_scorers": [
     {"name": "", "goals": 0, "xG": 0.00, "xG90": 0.00, "xA90": 0.00, "apps": 0, "minutes": 0, "position": "", "score_probability": 0}
   ],
