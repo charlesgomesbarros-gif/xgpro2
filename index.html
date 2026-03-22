@@ -256,6 +256,32 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
       <div class="thumbs" id="athumbs"></div>
     </div>
   </div>
+  <!-- BUTEURS -->
+  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:13px 15px;margin-bottom:13px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--gd);letter-spacing:2px;text-transform:uppercase;">Buteurs (optionnel)</div>
+      <div style="font-size:11px;color:var(--mt);">Page joueurs Understat</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <input type="file" accept="image/*" multiple id="scorersHomeInput" style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;">
+        <button type="button" onclick="document.getElementById('scorersHomeInput').click()" id="scorersHomeBtn"
+          style="width:100%;padding:9px;background:var(--sf2);border:1px dashed rgba(59,130,246,.3);border-radius:10px;color:var(--bl);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;letter-spacing:1px;-webkit-tap-highlight-color:transparent;">
+          ⚽ Buteurs DOM
+        </button>
+        <div id="scorersHomeStatus" style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:4px;text-align:center;"></div>
+      </div>
+      <div>
+        <input type="file" accept="image/*" multiple id="scorersAwayInput" style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;">
+        <button type="button" onclick="document.getElementById('scorersAwayInput').click()" id="scorersAwayBtn"
+          style="width:100%;padding:9px;background:var(--sf2);border:1px dashed rgba(249,115,22,.3);border-radius:10px;color:var(--or);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;letter-spacing:1px;-webkit-tap-highlight-color:transparent;">
+          ⚽ Buteurs EXT
+        </button>
+        <div id="scorersAwayStatus" style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:4px;text-align:center;"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- COTES -->
   <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:14px;margin-bottom:14px;">
     <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--ac);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Cotes du match (optionnel)</div>
@@ -419,7 +445,7 @@ function loadMEM(){
       return parsed;
     }
   }catch(e){}
-  return {leagues:{},match:{lh:null,la:null,h2h:null,hxg:null,axg:null,formHome:null,formAway:null}};
+  return {leagues:{},match:{lh:null,la:null,h2h:null,hxg:null,axg:null,formHome:null,formAway:null,scorersHome:null,scorersAway:null}};
 }
 function saveMEM(){
   try{
@@ -430,6 +456,8 @@ function saveMEM(){
 }
 
 var MEM = loadMEM();
+if(!MEM.match.scorersHome) MEM.match.scorersHome=null;
+if(!MEM.match.scorersAway) MEM.match.scorersAway=null;
 var ctxLeague = 'EPL';
 var homeFiles=[], awayFiles=[];
 
@@ -438,6 +466,19 @@ window.addEventListener('load', function(){
   updateMemBar();
   renderStTab();
   renderScTab();
+  // Restore scorer buttons if saved
+  if(MEM.match.scorersHome&&MEM.match.scorersHome.length){
+    var shb=document.getElementById('scorersHomeBtn');
+    if(shb){shb.style.border='1px solid rgba(34,211,165,.4)';shb.style.color='var(--gr)';shb.textContent='✓ Buteurs DOM - '+MEM.match.scorersHome.length+' joueurs';}
+    var shs=document.getElementById('scorersHomeStatus');
+    if(shs){shs.textContent=MEM.match.scorersHome.length+' joueurs charges';shs.style.color='var(--gr)';}
+  }
+  if(MEM.match.scorersAway&&MEM.match.scorersAway.length){
+    var sab=document.getElementById('scorersAwayBtn');
+    if(sab){sab.style.border='1px solid rgba(34,211,165,.4)';sab.style.color='var(--gr)';sab.textContent='✓ Buteurs EXT - '+MEM.match.scorersAway.length+' joueurs';}
+    var sas=document.getElementById('scorersAwayStatus');
+    if(sas){sas.textContent=MEM.match.scorersAway.length+' joueurs charges';sas.style.color='var(--gr)';}
+  }
   // Update ctx status buttons if data exists
   if(Object.keys(MEM.leagues).length > 0){
     var firstLeague = Object.keys(MEM.leagues)[0];
@@ -465,6 +506,7 @@ function updateMemBar(){
   setChip('memAX', MEM.match.axg);
   setChip('memLn', MEM.match.lh||MEM.match.la);
   setChip('memFm', MEM.match.formHome||MEM.match.formAway);
+  setChip('memSc', (MEM.match.scorersHome&&MEM.match.scorersHome.length)||(MEM.match.scorersAway&&MEM.match.scorersAway.length)||Object.keys(MEM.leagues).some(function(k){return MEM.leagues[k].scorers&&MEM.leagues[k].scorers.length;}));
 }
 
 function setChip(id,val){
@@ -554,6 +596,61 @@ setupDrop('hi',homeFiles,'hthumbs','hdrop');
 setupDrop('ai',awayFiles,'athumbs','adrop');
 
 // Form auto-extracted from DOM/EXT screenshots
+
+// Scorer upload handlers
+document.getElementById('scorersHomeInput').addEventListener('change', function(){
+  if(this.files&&this.files.length) handleScorersUpload(Array.from(this.files),'home');
+});
+document.getElementById('scorersAwayInput').addEventListener('change', function(){
+  if(this.files&&this.files.length) handleScorersUpload(Array.from(this.files),'away');
+});
+
+async function handleScorersUpload(files, side){
+  var btn=document.getElementById('scorers'+(side==='home'?'Home':'Away')+'Btn');
+  var status=document.getElementById('scorers'+(side==='home'?'Home':'Away')+'Status');
+  btn.style.opacity='0.6';
+  status.textContent='Analyse...';
+  status.style.color='var(--ac)';
+  try {
+    var allScorers=[];
+    for(var i=0;i<files.length;i++){
+      var b64=await toB64(files[i]);
+      var r=await callAPI(b64,files[i].type||'image/png','understat');
+      if(r.top_scorers&&r.top_scorers.length){
+        r.top_scorers.forEach(function(s){
+          s._sd=side==='home'?'h':'a';
+          allScorers.push(s);
+        });
+      }
+    }
+    // Deduplicate and sort
+    var sMap={};
+    allScorers.forEach(function(s){
+      if(s.name&&(!sMap[s.name]||(s.score_probability||0)>(sMap[s.name].score_probability||0)))sMap[s.name]=s;
+    });
+    var sorted=Object.values(sMap).sort(function(a,b){return (b.score_probability||0)-(a.score_probability||0);});
+
+    if(side==='home'){
+      MEM.match.scorersHome=sorted;
+      btn.style.border='1px solid rgba(34,211,165,.4)';
+      btn.style.color='var(--gr)';
+      btn.textContent='✓ Buteurs DOM - '+sorted.length+' joueurs';
+    } else {
+      MEM.match.scorersAway=sorted;
+      btn.style.border='1px solid rgba(34,211,165,.4)';
+      btn.style.color='var(--gr)';
+      btn.textContent='✓ Buteurs EXT - '+sorted.length+' joueurs';
+    }
+    status.textContent=sorted.length+' joueurs charges';
+    status.style.color='var(--gr)';
+    saveMEM();
+    updateMemBar();
+  } catch(e){
+    status.textContent='Erreur: '+e.message;
+    status.style.color='var(--rd)';
+  }
+  btn.style.opacity='1';
+}
 
 function addFiles(newFiles,arr,thumbId){
   var i=0;
@@ -1043,6 +1140,12 @@ function buildMatchData(hm,am,hn,an,odds){
     var edge = pct - impl;
     return {edge: Math.round(edge*10)/10, impl: Math.round(impl*10)/10, isValue: edge > 5};
   }
+  // Merge uploaded scorers with screenshot scorers
+  var uploadedHome=MEM.match.scorersHome||[];
+  var uploadedAway=MEM.match.scorersAway||[];
+  uploadedHome.forEach(function(s){s._sd='h';});
+  uploadedAway.forEach(function(s){s._sd='a';});
+
   var hs=(hm?hm.top_scorers||[]:[]).map(function(s){
     var pct=calcScorePct(s);
     return Object.assign({},s,{_sd:'h',score_probability:pct||s.score_probability||0});
@@ -1052,7 +1155,7 @@ function buildMatchData(hm,am,hn,an,odds){
     return Object.assign({},s,{_sd:'a',score_probability:pct||s.score_probability||0});
   });
   var sm={};
-  hs.concat(as2).concat(d.lgScorers||[]).forEach(function(s){
+  hs.concat(as2).concat(d.lgScorers||[]).concat(uploadedHome).concat(uploadedAway).forEach(function(s){
     if(s&&s.name&&(!sm[s.name]||(s.score_probability||0)>(sm[s.name].score_probability||0)))sm[s.name]=s;
   });
   d.scorers=Object.values(sm).sort(function(a,b){return (b.score_probability||0)-(a.score_probability||0);}).slice(0,8);
