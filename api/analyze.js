@@ -117,6 +117,10 @@ REPONDS EN JSON VALIDE uniquement, sans texte avant ou apres :
   "home_status": null,
   "away_status": null,
   "total_xG": null,
+  "open_play_xG": null,
+  "set_piece_xG": null,
+  "corner_xG": null,
+  "freekick_xG": null,
   "top_scorers": [
     {"name": "", "goals": 0, "xG": 0.00, "xG90": 0.00, "xA90": 0.00, "apps": 0, "minutes": 0, "position": "", "score_probability": 0}
   ],
