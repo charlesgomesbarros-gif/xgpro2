@@ -304,8 +304,8 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
     <div class="sec fin">Recommandations Paris</div>
     <div class="fin" id="betsbox"></div>
     <div class="aib fin" id="aibox" style="display:none">
-      <div class="aih"><div class="aid"></div><div class="ait">Analyse IA</div></div>
-      <div class="aix" id="aitx"></div>
+      <div class="aih"><div class="aid"></div><div class="ait">Analyse Tipster IA</div></div>
+      <div id="aitx"></div>
     </div>
     <div class="disc">Outil d'information uniquement - Pas un conseil en pari</div>
   </div>
@@ -1464,21 +1464,11 @@ function renderReport(d){
     b.exactScores.forEach(function(s,i){
       var col=i===0?'var(--ac)':i===1?'var(--gd)':'var(--mt)';
       // Try to get score cote from input
-      var scoreCoteEl=document.getElementById('scorecote'+i);
-      var scoreCote=scoreCoteEl?parseFloat(scoreCoteEl.value)||null:null;
       var edgeTxt='';
-      if(scoreCote){
-        var impl=100/scoreCote;
-        var edge=Math.round((s.pct-impl)*10)/10;
-        var edgeCol=edge>5?'var(--gr)':'var(--mt)';
-        edgeTxt='<div style="font-size:10px;color:'+edgeCol+';margin-top:2px;">'+(edge>0?'+':'')+edge+'% edge</div>';
-      }
       exactHtml+='<div style="background:var(--sf2);border-radius:10px;padding:10px;text-align:center;position:relative;">';
       exactHtml+='<div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:'+col+';">'+s.score+'</div>';
       exactHtml+='<div style="font-size:12px;color:var(--mt);font-family:DM Mono,monospace;font-weight:600;">'+s.pct+'%</div>';
       exactHtml+=edgeTxt;
-      exactHtml+='<input id="scorecote'+i+'" type="number" step="0.01" min="1" placeholder="cote" onchange="refreshExact()" ';
-      exactHtml+='style="width:100%;margin-top:6px;background:var(--sf);border:1px solid var(--bd);border-radius:5px;padding:4px 6px;color:var(--gd);font-size:10px;font-family:DM Mono,monospace;outline:none;">';
       exactHtml+='</div>';
     });
     exactHtml+='</div>';
@@ -1566,10 +1556,48 @@ function renderReport(d){
     +bchip('🔥','OVER 4.5',b45)
     +bchip('🫂','BTTS',b.btts)
     +'</div>'+h2hhtml;
-  // AI
+  // AI TIPSTER
   var txt=d.analysis||'';
-  if(d.vbet)txt+='\n\nValue Bet: '+d.vbet;
-  if(txt){document.getElementById('aibox').style.display='block';document.getElementById('aitx').textContent=txt;}
+  if(d.vbet&&txt.indexOf('Value Bet')<0) txt+='\nValue Bet: '+d.vbet;
+  if(txt){
+    document.getElementById('aibox').style.display='block';
+    // Parse tipster format and render with colors
+    var lines=txt.split('\n');
+    var html='';
+    lines.forEach(function(line){
+      if(!line.trim()) { html+='<div style="height:8px"></div>'; return; }
+      if(line.startsWith('Analyse :')||line.startsWith('Analyse:')){
+        html+='<div style="font-size:13px;color:var(--tx);line-height:1.8;margin-bottom:6px;">'+line+'</div>';
+      } else if(line.startsWith('Value Bet :')||line.startsWith('Value Bet:')){
+        var val=line.replace('Value Bet :','').replace('Value Bet:','').trim();
+        html+='<div style="background:rgba(34,211,165,.1);border:1px solid rgba(34,211,165,.3);border-radius:8px;padding:8px 12px;margin:6px 0;display:flex;align-items:center;gap:8px;">';
+        html+='<span style="font-family:Bebas Neue,sans-serif;font-size:13px;color:var(--gr);letter-spacing:1px;">VALUE BET</span>';
+        html+='<span style="font-family:Bebas Neue,sans-serif;font-size:18px;color:var(--gr);letter-spacing:1px;">'+val+'</span>';
+        html+='</div>';
+      } else if(line.startsWith('Confiance :')||line.startsWith('Confiance:')){
+        var conf=line.replace('Confiance :','').replace('Confiance:','').trim();
+        var num=parseFloat(conf);
+        var ccol=num>=7?'var(--gr)':num>=5?'var(--gd)':'var(--rd)';
+        html+='<div style="display:flex;align-items:center;gap:10px;margin:6px 0;">';
+        html+='<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:2px;text-transform:uppercase;">Confiance</span>';
+        html+='<span style="font-family:Bebas Neue,sans-serif;font-size:22px;color:'+ccol+';">'+conf+'</span>';
+        if(!isNaN(num)){
+          html+='<div style="flex:1;height:4px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;">';
+          html+='<div style="height:100%;width:'+(num/10*100)+'%;background:'+ccol+';border-radius:2px;"></div></div>';
+        }
+        html+='</div>';
+      } else if(line.startsWith('A eviter :')||line.startsWith('A eviter:')){
+        var av=line.replace('A eviter :','').replace('A eviter:','').trim();
+        html+='<div style="background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.25);border-radius:8px;padding:8px 12px;margin:6px 0;display:flex;align-items:center;gap:8px;">';
+        html+='<span style="font-family:Bebas Neue,sans-serif;font-size:13px;color:var(--rd);letter-spacing:1px;">A EVITER</span>';
+        html+='<span style="font-size:12px;color:var(--mt);">'+av+'</span>';
+        html+='</div>';
+      } else {
+        html+='<div style="font-size:13px;color:var(--tx);line-height:1.8;opacity:.88;">'+line+'</div>';
+      }
+    });
+    document.getElementById('aitx').innerHTML=html;
+  }
 
   // AUTO EXPLANATION BOX
   var expHtml = '<div style="background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:15px;margin-top:12px;">';
