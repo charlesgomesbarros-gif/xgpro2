@@ -258,10 +258,7 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
   </div>
   <!-- BUTEURS -->
   <div style="background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:13px 15px;margin-bottom:13px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--gd);letter-spacing:2px;text-transform:uppercase;">Buteurs (optionnel)</div>
-      <div style="font-size:11px;color:var(--mt);">Page joueurs Understat</div>
-    </div>
+    <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--gd);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Buteurs</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div>
         <input type="file" accept="image/*" multiple id="scorersHomeInput" style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;">
@@ -1514,9 +1511,39 @@ function renderReport(d){
   }
   document.getElementById('tcols').innerHTML=tcard(d.ht,d.hs,d.hxg,d.hxga,d.hr,d.hst,'home',d.hstand)+tcard(d.at,d.as,d.axg,d.axga,d.ar,d.ast,'away',d.astand);
   // Scorers
+  _currentMatchData=d;
+  renderScorers(d,'all');
+}
+
+function renderScorers(d,mode){
   var schtml='';
-  if(d.scorers&&d.scorers.length){
-    d.scorers.forEach(function(s,i){
+  var scorers=d.scorers||[];
+  if(mode==='last10'){
+    var formH=MEM.match.formHome,formA=MEM.match.formAway;
+    var last10H=formH&&formH.matches?formH.matches.slice(-10):[];
+    var last10A=formA&&formA.matches?formA.matches.slice(-10):[];
+    var avgXgH=last10H.length?last10H.reduce(function(a,m){return a+(parseFloat(m.xG)||0);},0)/last10H.length:null;
+    var avgXgA=last10A.length?last10A.reduce(function(a,m){return a+(parseFloat(m.xGA)||0);},0)/last10A.length:null;
+    scorers=scorers.map(function(s){
+      var adj=Object.assign({},s);
+      if(s._sd==='h'&&avgXgH!=null){
+        var sxgH=d.hxg&&d.hxg>3?d.hxg/Math.round(d.hxg/1.45):d.hxg||1.3;
+        var ff=Math.max(0.5,Math.min(avgXgH/Math.max(sxgH,0.5),2.0));
+        adj.score_probability=Math.min(Math.round((s.score_probability||0)*ff),90);
+        adj._formFactor=ff;
+      }
+      if(s._sd==='a'&&avgXgA!=null){
+        var sxgA=d.axg&&d.axg>3?d.axg/Math.round(d.axg/1.45):d.axg||1.2;
+        var ffa=Math.max(0.5,Math.min(avgXgA/Math.max(sxgA,0.5),2.0));
+        adj.score_probability=Math.min(Math.round((s.score_probability||0)*ffa),90);
+        adj._formFactor=ffa;
+      }
+      return adj;
+    });
+    scorers.sort(function(a,b){return (b.score_probability||0)-(a.score_probability||0);});
+  }
+  if(scorers.length){
+    scorers.forEach(function(s,i){
       var pct=Math.min(Math.round(s.score_probability||0),99);
       var cls=pct>=50?'hc':pct>=25?'mc2':'lc';
       var fcls=pct>=50?'fh':pct>=25?'fm':'fl';
@@ -1530,6 +1557,13 @@ function renderReport(d){
       if(scorerCote){
         var se=scorerEdge(pct,scorerCote);
         if(se) scEdgeHtml='<span style="font-size:10px;margin-left:6px;color:'+(se.isValue?'var(--gr)':'var(--mt)')+';">'+(se.edge>0?'+':'')+se.edge+'% edge</span>';
+      }
+      var formBadge='';
+      if(s._formFactor!=null){
+        var ff=s._formFactor;
+        var ffCol=ff>1.1?'var(--gr)':ff<0.9?'var(--rd)':'var(--mt)';
+        var ffTxt=ff>1.1?'Forme +':'Forme -';
+        formBadge='<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.05);color:'+ffCol+';margin-left:4px;">'+ffTxt+Math.round(Math.abs(ff-1)*100)+'%</span>';
       }
       schtml+='<div class="sci"><div class="scr '+rk+'">'+(i+1)+'</div>'
         +'<div style="flex:1"><div class="scnm">'+(s.name||'-')+' '+sbd+scEdgeHtml+'</div>'
@@ -1545,9 +1579,11 @@ function renderReport(d){
         +'</div>';
     });
   } else {
-    schtml='<div style="color:var(--mt);font-size:13px;padding:8px;">Uploade des pages joueurs Understat ou le top buteurs dans Donnees</div>';
+    schtml='<div style="color:var(--mt);font-size:13px;padding:8px;">Upload des buteurs DOM/EXT ou le top buteurs dans Donnees</div>';
   }
-  document.getElementById('scbox').innerHTML=schtml;
+  var modeNote=mode==='last10'?'<div style="font-size:10px;color:var(--ac);font-family:DM Mono,monospace;margin-top:6px;padding:0 4px;">Affichage base sur le screenshot filtre Last 10 d Understat</div>':'';
+  document.getElementById('scbox').innerHTML=schtml+modeNote;
+
   // Bets
   var b=d.bets;
   var cc=b.best?(b.best.pct>=65?'var(--gr)':b.best.pct>=45?'var(--gd)':'var(--mt)'):'var(--mt)';
