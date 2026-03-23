@@ -232,6 +232,7 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
   <button class="tab"     id="tb1">Donnees</button>
   <button class="tab"     id="tb2">Classements</button>
   <button class="tab"     id="tb3">Buteurs</button>
+  <button class="tab"     id="tb4">Tracker</button>
 </div>
 
 <!-- ═══════════ TAB 0 — ANALYSE ═══════════ -->
@@ -246,6 +247,7 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
         <button type="button" class="bpk h" onclick="document.getElementById('hi').click()">📂 Images</button>
       </div>
       <div class="thumbs" id="hthumbs"></div>
+      <button onclick="resetSide('home')" style="width:calc(100% - 20px);margin:0 10px 8px;padding:5px;background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.2);border-radius:7px;color:var(--rd);font-family:DM Mono,monospace;font-size:10px;cursor:pointer;">🗑 Reset DOM</button>
     </div>
     <div class="tbox">
       <div class="tbhdr"><div style="width:8px;height:8px;border-radius:50%;background:var(--or);flex-shrink:0"></div><input class="tni a" id="an" placeholder="Equipe exterieur"></div>
@@ -254,6 +256,7 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
         <button type="button" class="bpk a" onclick="document.getElementById('ai').click()">📂 Images</button>
       </div>
       <div class="thumbs" id="athumbs"></div>
+      <button onclick="resetSide('away')" style="width:calc(100% - 20px);margin:0 10px 8px;padding:5px;background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.2);border-radius:7px;color:var(--rd);font-family:DM Mono,monospace;font-size:10px;cursor:pointer;">🗑 Reset EXT</button>
     </div>
   </div>
   <!-- BUTEURS -->
@@ -275,6 +278,23 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
           ⚽ Buteurs EXT
         </button>
         <div id="scorersAwayStatus" style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:4px;text-align:center;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABSENCES -->
+  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:13px 15px;margin-bottom:13px;">
+    <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--rd);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Absences / Blessures (optionnel)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:4px;">Absents DOM</div>
+        <textarea id="absHome" placeholder="Ex: Haaland blesse, Rodri suspendu..." rows="2"
+          style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:7px 10px;color:var(--tx);font-family:DM Sans,sans-serif;font-size:12px;outline:none;resize:none;line-height:1.5;"></textarea>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:4px;">Absents EXT</div>
+        <textarea id="absAway" placeholder="Ex: Salah incertain..." rows="2"
+          style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:7px 10px;color:var(--tx);font-family:DM Sans,sans-serif;font-size:12px;outline:none;resize:none;line-height:1.5;"></textarea>
       </div>
     </div>
   </div>
@@ -426,6 +446,86 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
   </div>
 </div>
 
+<div class="panel" id="p4">
+  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:16px;margin-bottom:14px;">
+    <div class="sec">Tracker de resultats</div>
+    <p style="font-size:13px;color:var(--mt);margin-bottom:14px;line-height:1.7;">Enregistre tes paris et suis la performance de l app.</p>
+
+    <!-- Add entry form -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <input id="trMatch" placeholder="Ex: Newcastle vs Sunderland" style="background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;color:var(--tx);font-family:DM Sans,sans-serif;font-size:13px;outline:none;grid-column:1/-1;">
+      <input id="trBet" placeholder="Pari joue (ex: Sunderland WIN)" style="background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;color:var(--tx);font-family:DM Sans,sans-serif;font-size:13px;outline:none;">
+      <input id="trCote" type="number" step="0.01" placeholder="Cote" style="background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;color:var(--gd);font-family:DM Mono,monospace;font-size:13px;outline:none;">
+      <input id="trMise" type="number" step="1" placeholder="Mise (€)" style="background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;color:var(--tx);font-family:DM Mono,monospace;font-size:13px;outline:none;">
+      <select id="trResult" style="background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;color:var(--tx);font-family:DM Sans,sans-serif;font-size:13px;outline:none;">
+        <option value="">Resultat...</option>
+        <option value="won">Gagne</option>
+        <option value="lost">Perdu</option>
+        <option value="void">Void/Rembourse</option>
+      </select>
+      <input id="trEdge" type="number" step="0.1" placeholder="Edge detecte (%)" style="background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;color:var(--gr);font-family:DM Mono,monospace;font-size:13px;outline:none;">
+    </div>
+    <button onclick="addTrackerEntry()" style="width:100%;padding:11px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:10px;color:#fff;font-family:DM Sans,sans-serif;font-weight:700;font-size:13px;cursor:pointer;margin-bottom:16px;">+ Ajouter ce pari</button>
+
+    <!-- Stats summary -->
+    <div id="trackerStats" style="display:none;background:var(--sf2);border-radius:12px;padding:14px;margin-bottom:14px;"></div>
+
+    <!-- Entries list -->
+    <div id="trackerList"></div>
+  </div>
+</div>
+
+
+<!-- ═══ TAB 4 — JOURNEE COMPLETE ═══ -->
+<div class="panel" id="p4">
+  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:16px;margin-bottom:14px;">
+    <div class="sec" style="margin-bottom:10px;">Analyser une journee complete</div>
+    <p style="font-size:13px;color:var(--mt);margin-bottom:14px;line-height:1.7;">
+      Uploade les screenshots xG de toutes les equipes. L app detecte automatiquement les matchs et les analyse en lot.
+    </p>
+    <div style="background:var(--sf2);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:8px;">EQUIPES DOM</div>
+      <input type="file" accept="image/*" multiple id="dayHomeInput" style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;">
+      <button type="button" onclick="document.getElementById('dayHomeInput').click()" style="width:100%;padding:10px;background:var(--sf);border:1px dashed rgba(59,130,246,.3);border-radius:10px;color:var(--bl);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;margin-bottom:8px;">📸 Screenshots equipes DOM</button>
+      <div id="dayHomeStatus" style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;"></div>
+    </div>
+    <div style="background:var(--sf2);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--or);letter-spacing:2px;margin-bottom:8px;">EQUIPES EXT</div>
+      <input type="file" accept="image/*" multiple id="dayAwayInput" style="position:fixed;top:-999px;left:-999px;opacity:0;width:1px;height:1px;">
+      <button type="button" onclick="document.getElementById('dayAwayInput').click()" style="width:100%;padding:10px;background:var(--sf);border:1px dashed rgba(249,115,22,.3);border-radius:10px;color:var(--or);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;margin-bottom:8px;">📸 Screenshots equipes EXT</button>
+      <div id="dayAwayStatus" style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;"></div>
+    </div>
+    <button onclick="analyzeDayMatches()" id="btnDay" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:13px;color:#fff;font-family:DM Sans,sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" disabled>ANALYSER LA JOURNEE</button>
+    <div class="iload" id="dayLoader"><div class="ispin"></div><div class="ilbl" id="dayLbl">ANALYSE...</div></div>
+    <div class="err" id="errDay"></div>
+  </div>
+  <div id="dayResults"></div>
+</div>
+
+<!-- ═══ TAB 5 — HISTORIQUE ═══ -->
+<div class="panel" id="p5">
+  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:16px;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="sec" style="margin-bottom:0;">5 Dernieres Analyses</div>
+      <button onclick="clearHistory()" style="padding:5px 12px;background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.25);border-radius:8px;color:var(--rd);font-family:DM Mono,monospace;font-size:10px;cursor:pointer;">Effacer</button>
+    </div>
+    <div id="historyList"><div class="info">Aucune analyse sauvegardee. Lance une analyse pour la voir ici.</div></div>
+  </div>
+</div>
+
+<!-- ═══ TAB 6 — TRACKER ═══ -->
+<div class="panel" id="p6">
+  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:16px;margin-bottom:14px;">
+    <div class="sec" style="margin-bottom:12px;">Tracker de Resultats</div>
+    <p style="font-size:13px;color:var(--mt);margin-bottom:14px;line-height:1.7;">Entre le vrai resultat pour mesurer la precision de l app.</p>
+    <div id="trackerList"><div class="info">Aucune analyse a tracker. Lance une analyse d abord.</div></div>
+  </div>
+  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:16px;margin-bottom:14px;" id="trackerStats" style="display:none;">
+    <div class="sec" style="margin-bottom:12px;">Statistiques de Precision</div>
+    <div id="trackerStatsContent"></div>
+  </div>
+</div>
+
 </div><!-- /wrap -->
 <script>
 // ═══════════════════════════════════
@@ -527,7 +627,7 @@ function resetAll(){
 // ═══════════════════════════════════
 //  TABS
 // ═══════════════════════════════════
-[0,1,2,3].forEach(function(i){
+[0,1,2,3,4,5,6].forEach(function(i){
   var btn=document.getElementById('tb'+i);
   if(!btn)return;
   btn.addEventListener('click',function(){showTab(i);});
@@ -535,7 +635,7 @@ function resetAll(){
 });
 
 function showTab(i){
-  for(var j=0;j<4;j++){
+  for(var j=0;j<5;j++){
     var b=document.getElementById('tb'+j);
     var p=document.getElementById('p'+j);
     if(b)b.className='tab'+(j===i?' on':'');
@@ -1024,7 +1124,9 @@ async function doAnalyze(){
           hr:d.hr,ar:d.ar,
           adjXgH:d.adjXgH,adjXgA:d.adjXgA,
           hstand:d.hstand,astand:d.astand,
-          bets:d.bets
+          bets:d.bets,
+          absHome:document.getElementById('absHome')?document.getElementById('absHome').value:'',
+          absAway:document.getElementById('absAway')?document.getElementById('absAway').value:''
         }})
       });
       var tdata=await tresp.json();
@@ -1457,6 +1559,17 @@ function renderReport(d){
   document.getElementById('rep').style.display='block';
   window.scrollTo({top:document.getElementById('rep').offsetTop-20,behavior:'smooth'});
   // Match header
+  // Show absences alert
+  var absH=document.getElementById('absHome')?document.getElementById('absHome').value.trim():'';
+  var absA=document.getElementById('absAway')?document.getElementById('absAway').value.trim():'';
+  if(absH||absA){
+    var absHtml='<div style="background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.2);border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:12px;">';
+    absHtml+='<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--rd);letter-spacing:2px;margin-bottom:5px;">ABSENCES SIGNALEES</div>';
+    if(absH) absHtml+='<div style="color:var(--bl);margin-bottom:2px;"><b>'+d.ht+':</b> '+absH+'</div>';
+    if(absA) absHtml+='<div style="color:var(--or);"><b>'+d.at+':</b> '+absA+'</div>';
+    absHtml+='</div>';
+    document.getElementById('rep').insertAdjacentHTML('afterbegin',absHtml);
+  }
   var adjXgInfo='';
   if(d.bets&&d.bets.attackH){
     adjXgInfo='<div style="font-size:10px;color:var(--ac);font-family:DM Mono,monospace;margin-top:4px;">xG/match ajuste: '+d.ht+' '+d.bets.attackH.toFixed(2)+' | '+d.at+' '+d.bets.attackA.toFixed(2)+(d.bets.hasForm?' | Forme ponderee active':'')+'</div>';
@@ -1566,15 +1679,20 @@ function renderScorers(d,mode){
         formBadge='<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.05);color:'+ffCol+';margin-left:4px;">'+ffTxt+Math.round(Math.abs(ff-1)*100)+'%</span>';
       }
       schtml+='<div class="sci"><div class="scr '+rk+'">'+(i+1)+'</div>'
-        +'<div style="flex:1"><div class="scnm">'+(s.name||'-')+' '+sbd+scEdgeHtml+'</div>'
+        +'<div style="flex:1">'
+        +'<div class="scnm">'+(s.name||'-')+' '+sbd+formBadge+'</div>'
         +'<div class="scsb">'+(s.goals||0)+' buts - xG '+xgv+' - '+(s.apps||0)+' matchs'
-        +(pct>0?' - xG90: '+(s.xG90?parseFloat(s.xG90).toFixed(2):'-'):'')+'</div></div>'
+        +(pct>0?' - xG90: '+(s.xG90?parseFloat(s.xG90).toFixed(2):'-'):'')+'</div>'
+        +'<div style="display:flex;align-items:center;gap:6px;margin-top:5px;">'
+        +'<input id="scote'+i+'" type="number" step="0.01" min="1" placeholder="cote anytime" '
+        +'style="width:120px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:4px 8px;color:var(--gd);font-size:11px;font-family:DM Mono,monospace;outline:none;" '
+        +'oninput="calcScorerEdge('+i+','+pct+')">'
+        +'<span id="scedge'+i+'" style="font-size:10px;font-family:DM Mono,monospace;"></span>'
+        +'</div>'
+        +'</div>'
         +'<div class="scp">'
         +'<div class="scpv '+cls+'">'+pct+'%</div>'
         +'<div class="spb"><div class="spf '+fcls+'" style="width:'+pct+'%"></div></div>'
-        +'<input id="scote'+(i+1)+'" type="number" step="0.01" min="1" placeholder="cote" '
-        +'style="width:52px;background:var(--sf2);border:1px solid var(--bd);border-radius:5px;padding:3px 5px;color:var(--gd);font-size:10px;font-family:DM Mono,monospace;outline:none;margin-top:4px;" '
-        +'onchange="updateScoreEdge('+i+')" title="Cote bookmaker">'
         +'</div>'
         +'</div>';
     });
@@ -1906,6 +2024,241 @@ function renderScorers(d,mode){
   expDiv.innerHTML=expHtml;
   document.getElementById('rep').appendChild(expDiv);
 }
+
+// ================================================================
+// RESET PARTIEL
+// ================================================================
+function resetSide(side){
+  if(side==='home'){
+    homeFiles.length=0; renderThumbs(homeFiles,'hthumbs');
+    MEM.match.hxg=null; MEM.match.formHome=null; MEM.match.scorersHome=null;
+    document.getElementById('hn').value='';
+    var b=document.getElementById('scorersHomeBtn');
+    if(b){b.style.border='1px dashed rgba(59,130,246,.3)';b.style.color='var(--bl)';b.textContent='⚽ Buteurs DOM';}
+    var s=document.getElementById('scorersHomeStatus'); if(s)s.textContent='';
+  } else {
+    awayFiles.length=0; renderThumbs(awayFiles,'athumbs');
+    MEM.match.axg=null; MEM.match.formAway=null; MEM.match.scorersAway=null;
+    document.getElementById('an').value='';
+    var b2=document.getElementById('scorersAwayBtn');
+    if(b2){b2.style.border='1px dashed rgba(249,115,22,.3)';b2.style.color='var(--or)';b2.textContent='⚽ Buteurs EXT';}
+    var s2=document.getElementById('scorersAwayStatus'); if(s2)s2.textContent='';
+  }
+  document.getElementById('bana').disabled=(!homeFiles.length&&!awayFiles.length);
+  updateMemBar(); saveMEM();
+}
+
+// ================================================================
+// HISTORIQUE (5 dernieres analyses)
+// ================================================================
+function saveToHistory(d){
+  try {
+    var hist=getHistory();
+    hist.unshift({
+      id:Date.now(), date:new Date().toLocaleDateString('fr-FR'),
+      ht:d.ht, at:d.at, hxg:d.hxg, axg:d.axg, hr:d.hr, ar:d.ar,
+      signal:d.bets&&d.bets.signal||'',
+      bestBet:d.bets&&d.bets.best?d.bets.best.label+' '+d.bets.best.pct+'%':'',
+      values:d.bets&&d.bets.values?d.bets.values.map(function(v){return v.label+' +'+v.val.edge+'%';}):[]
+    });
+    hist=hist.slice(0,5);
+    localStorage.setItem('xgscout_hist',JSON.stringify(hist));
+    renderHistory();
+  } catch(e){}
+}
+function getHistory(){ try{return JSON.parse(localStorage.getItem('xgscout_hist')||'[]');}catch(e){return[];} }
+function clearHistory(){ localStorage.removeItem('xgscout_hist'); localStorage.removeItem('xgscout_track'); renderHistory(); renderTracker(); }
+
+function renderHistory(){
+  var el=document.getElementById('historyList'); if(!el)return;
+  var hist=getHistory();
+  if(!hist.length){el.innerHTML='<div class="info">Aucune analyse sauvegardee.</div>';return;}
+  var html='';
+  hist.forEach(function(e){
+    html+='<div style="background:var(--sf2);border-radius:12px;padding:13px;margin-bottom:10px;">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">';
+    html+='<span style="font-family:Bebas Neue,sans-serif;font-size:18px;letter-spacing:2px;color:var(--tx);">'+e.ht+' vs '+e.at+'</span>';
+    html+='<span style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;">'+e.date+'</span>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:10px;flex-wrap:wrap;">';
+    if(e.hxg) html+='<span style="font-size:11px;color:var(--mt);">xG '+e.hxg.toFixed(2)+' vs '+e.axg.toFixed(2)+'</span>';
+    if(e.signal) html+='<span style="font-size:11px;color:var(--ac);font-family:DM Mono,monospace;">'+e.signal+'</span>';
+    if(e.bestBet) html+='<span style="font-size:11px;color:var(--gd);">'+e.bestBet+'</span>';
+    if(e.values&&e.values.length) html+='<span style="font-size:11px;color:var(--gr);">VALUE: '+e.values.join(' | ')+'</span>';
+    html+='</div></div>';
+  });
+  el.innerHTML=html;
+}
+
+// ================================================================
+// TRACKER DE RESULTATS
+// ================================================================
+function getTracker(){ try{return JSON.parse(localStorage.getItem('xgscout_track')||'[]');}catch(e){return[];} }
+
+function addToTracker(e){
+  try {
+    var t=getTracker();
+    if(!t.find(function(x){return x.id===e.id;})){
+      t.unshift(Object.assign({},e,{result:null,correct:null}));
+      t=t.slice(0,20);
+      localStorage.setItem('xgscout_track',JSON.stringify(t));
+    }
+    renderTracker();
+  } catch(ex){}
+}
+
+function submitResult(id){
+  var h=parseInt(document.getElementById('res_h_'+id).value);
+  var a=parseInt(document.getElementById('res_a_'+id).value);
+  if(isNaN(h)||isNaN(a)){alert('Entre les 2 scores!');return;}
+  var t=getTracker();
+  t=t.map(function(e){
+    if(e.id!==id) return e;
+    e.result={h:h,a:a};
+    var bet=(e.bestBet||'').toUpperCase();
+    var goals=h+a;
+    if(bet.indexOf('OVER 2.5')>=0) e.correct=goals>2;
+    else if(bet.indexOf('OVER 3.5')>=0) e.correct=goals>3;
+    else if(bet.indexOf('BTTS')>=0) e.correct=h>0&&a>0;
+    else if(bet.indexOf('NUL')>=0) e.correct=h===a;
+    else if(bet.indexOf('WIN')>=0){
+      var htw=bet.indexOf(e.ht.toUpperCase().split(' ')[0])>=0;
+      e.correct=htw?(h>a):(a>h);
+    }
+    else e.correct=false;
+    return e;
+  });
+  localStorage.setItem('xgscout_track',JSON.stringify(t));
+  renderTracker();
+}
+
+function renderTracker(){
+  var t=getTracker();
+  var el=document.getElementById('trackerList'); if(!el)return;
+  if(!t.length){el.innerHTML='<div class="info">Lance une analyse pour la tracker ici.</div>';return;}
+  var total=0,ok=0;
+  var html='';
+  t.forEach(function(e){
+    if(e.correct!==null){total++;if(e.correct)ok++;}
+    var bet=(e.bestBet||'-').replace(/[0-9]+%/,'').trim();
+    html+='<div style="background:var(--sf2);border-radius:12px;padding:13px;margin-bottom:10px;">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+    html+='<span style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;color:var(--tx);">'+e.ht+' vs '+e.at+'</span>';
+    html+='<span style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;">'+e.date+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:11px;color:var(--mt);margin-bottom:8px;">Pari: <span style="color:var(--ac);">'+bet+'</span></div>';
+    if(e.result===null){
+      html+='<div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:6px;">';
+      html+='<input type="number" min="0" max="20" placeholder="'+e.ht+'" id="res_h_'+e.id+'" style="background:var(--sf);border:1px solid var(--bd);border-radius:7px;padding:7px;color:var(--bl);font-family:DM Mono,monospace;font-size:13px;outline:none;text-align:center;">';
+      html+='<input type="number" min="0" max="20" placeholder="'+e.at+'" id="res_a_'+e.id+'" style="background:var(--sf);border:1px solid var(--bd);border-radius:7px;padding:7px;color:var(--or);font-family:DM Mono,monospace;font-size:13px;outline:none;text-align:center;">';
+      html+='<button onclick="submitResult('+e.id+')" style="padding:7px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:7px;color:#fff;font-family:DM Mono,monospace;font-size:11px;cursor:pointer;">OK</button>';
+      html+='</div>';
+    } else {
+      var col=e.correct?'var(--gr)':'var(--rd)';
+      html+='<div style="display:flex;align-items:center;gap:10px;">';
+      html+='<span style="font-family:Bebas Neue,sans-serif;font-size:22px;color:var(--ac);">'+e.result.h+' - '+e.result.a+'</span>';
+      html+='<span style="font-family:Bebas Neue,sans-serif;font-size:16px;color:'+col+';">'+(e.correct?'✓ CORRECT':'✗ INCORRECT')+'</span>';
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  el.innerHTML=html;
+  if(total>0){
+    var pct=Math.round(ok/total*100);
+    var col2=pct>=60?'var(--gr)':pct>=40?'var(--gd)':'var(--rd)';
+    var sc=document.getElementById('trackerStatsContent');
+    if(sc) sc.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'
+      +'<div style="background:var(--sf2);border-radius:10px;padding:14px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:32px;color:'+col2+';">'+pct+'%</div><div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;">Precision</div></div>'
+      +'<div style="background:var(--sf2);border-radius:10px;padding:14px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:32px;color:var(--gr);">'+ok+'</div><div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;">Corrects</div></div>'
+      +'<div style="background:var(--sf2);border-radius:10px;padding:14px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:32px;color:var(--mt);">'+total+'</div><div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;">Total</div></div>'
+      +'</div>';
+    var ts=document.getElementById('trackerStats'); if(ts)ts.style.display='block';
+  }
+}
+
+// ================================================================
+// JOURNEE COMPLETE
+// ================================================================
+var dayHomeData=[], dayAwayData=[];
+document.getElementById('dayHomeInput').addEventListener('change',function(){
+  if(this.files&&this.files.length) loadDayFiles(Array.from(this.files),'home');
+});
+document.getElementById('dayAwayInput').addEventListener('change',function(){
+  if(this.files&&this.files.length) loadDayFiles(Array.from(this.files),'away');
+});
+
+async function loadDayFiles(files,side){
+  var lbl='day'+(side==='home'?'Home':'Away')+'Status';
+  document.getElementById(lbl).textContent='Analyse...';
+  document.getElementById(lbl).style.color='var(--ac)';
+  var results=[];
+  for(var i=0;i<files.length;i++){
+    var b64=await toB64(files[i]);
+    var r=await callAPI(b64,files[i].type||'image/png','understat');
+    if(r&&(r.team_name||r.home_team||r.team_xG_total)) results.push(r);
+  }
+  if(side==='home') dayHomeData=results;
+  else dayAwayData=results;
+  document.getElementById(lbl).textContent=results.length+' equipe(s): '+results.map(function(r){return r.team_name||r.home_team||'?';}).join(', ');
+  document.getElementById(lbl).style.color='var(--gr)';
+  document.getElementById('btnDay').disabled=!(dayHomeData.length&&dayAwayData.length);
+}
+
+async function analyzeDayMatches(){
+  document.getElementById('dayLoader').style.display='block';
+  document.getElementById('dayResults').innerHTML='';
+  var len=Math.min(dayHomeData.length,dayAwayData.length);
+  var matches=[];
+  for(var i=0;i<len;i++){
+    var hm=dayHomeData[i], am=dayAwayData[i];
+    var d=buildMatchData(hm,am,hm.team_name||hm.home_team||'DOM '+(i+1),am.team_name||am.away_team||'EXT '+(i+1),{});
+    matches.push(d);
+  }
+  document.getElementById('dayLoader').style.display='none';
+  window._dayMatches=matches;
+  renderDayResults(matches);
+}
+
+function renderDayResults(matches){
+  var html='<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:2px;margin-bottom:12px;">'+matches.length+' MATCHS - CLIQUER POUR VOIR LE DETAIL</div>';
+  matches.forEach(function(d,i){
+    var b=d.bets||{};
+    var slvl=b.signalLevel||0;
+    var scol=slvl>=3?'var(--gr)':slvl>=2?'var(--gd)':slvl>=1?'var(--ac)':'var(--mt)';
+    html+='<div style="background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:14px;margin-bottom:10px;cursor:pointer;" onclick="loadDayMatch('+i+')">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px;">';
+    html+='<span style="font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:2px;"><span style="color:var(--bl);">'+d.ht+'</span> <span style="color:var(--mt);">vs</span> <span style="color:var(--or);">'+d.at+'</span></span>';
+    html+='<span style="font-family:Bebas Neue,sans-serif;font-size:13px;color:'+scol+';">'+(b.signal||'NO BET')+'</span>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:10px;flex-wrap:wrap;">';
+    if(d.hxg) html+='<span style="font-size:11px;color:var(--mt);">xG '+d.hxg.toFixed(2)+' vs '+d.axg.toFixed(2)+'</span>';
+    if(b.best) html+='<span style="font-size:11px;color:var(--gd);">'+b.best.label+' '+b.best.pct+'%</span>';
+    if(b.values&&b.values.length) html+='<span style="font-size:11px;color:var(--gr);">VALUE: '+b.values.map(function(v){return v.label+' +'+v.val.edge+'%';}).join(' | ')+'</span>';
+    html+='</div></div>';
+  });
+  document.getElementById('dayResults').innerHTML=html;
+}
+
+function loadDayMatch(idx){
+  if(!window._dayMatches||!window._dayMatches[idx]) return;
+  var d=window._dayMatches[idx];
+  showTab(0);
+  document.getElementById('hn').value=d.ht;
+  document.getElementById('an').value=d.at;
+  window._lastMatchData=d;
+  renderReport(d);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ================================================================
+// INIT
+// ================================================================
+window.addEventListener('load',function(){
+  renderHistory();
+  renderTracker();
+});
 </script>
+</body>
+</html>
 </body>
 </html>
