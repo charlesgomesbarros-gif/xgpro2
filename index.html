@@ -1199,27 +1199,25 @@ async function doAnalyze(){
     window._lastHomeRaw=hm?JSON.parse(JSON.stringify(hm)):null;
     window._lastAwayRaw=am?JSON.parse(JSON.stringify(am)):null;
     var d=buildMatchData(hm,am,hn,an,odds,absentHome,absentAway);
-    // Vérifier données manquantes AVANT d'aller plus loin
-    var _missing=[];
-    if(d.hxg==null) _missing.push({team:d.ht,side:'h',field:'xG',id:'mfill_hxg'});
-    if(d.axg==null) _missing.push({team:d.at,side:'a',field:'xG',id:'mfill_axg'});
-    if(d.hxga==null) _missing.push({team:d.ht,side:'h',field:'xGA',id:'mfill_hxga'});
-    if(d.axga==null) _missing.push({team:d.at,side:'a',field:'xGA',id:'mfill_axga'});
-    if(d.hs==null) _missing.push({team:d.ht,side:'h',field:'Buts',id:'mfill_hs'});
-    if(d.as==null) _missing.push({team:d.at,side:'a',field:'Buts',id:'mfill_as'});
     document.getElementById('pgw').style.display='none';
     document.getElementById('bana').disabled=false;
+    // Vérifier données manquantes — seulement pour les équipes dont on a uploadé les fichiers
+    var _missing=[];
+    if(homeFiles.length>0){
+      if(d.hxg==null)  _missing.push({team:d.ht,side:'h',field:'xG',id:'mfill_hxg'});
+      if(d.hxga==null) _missing.push({team:d.ht,side:'h',field:'xGA',id:'mfill_hxga'});
+      if(d.hs==null)   _missing.push({team:d.ht,side:'h',field:'Buts',id:'mfill_hs'});
+    }
+    if(awayFiles.length>0){
+      if(d.axg==null)  _missing.push({team:d.at,side:'a',field:'xG',id:'mfill_axg'});
+      if(d.axga==null) _missing.push({team:d.at,side:'a',field:'xGA',id:'mfill_axga'});
+      if(d.as==null)   _missing.push({team:d.at,side:'a',field:'Buts',id:'mfill_as'});
+    }
     if(_missing.length){
-      // Afficher formulaire de saisie obligatoire
       showMissingForm(_missing, d, hn, an, odds, absentHome, absentAway);
       return;
     }
-    setProg(100,'Termine !');
-    await new Promise(function(r){setTimeout(r,200);});
-    document.getElementById('pgw').style.display='none';
-    document.getElementById('bana').disabled=false;
     window._lastMatchData=d;
-    // Call tipster API here, then render
     setProg(95,'Analyse tipster IA...');
     try {
       var _tipTO=new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},8000);});
@@ -1247,15 +1245,13 @@ function setProg(pct,lbl){document.getElementById('pgf').style.width=pct+'%';doc
 
 function buildLocalTipster(d){
   var b=d.bets||{};
-  var hxg=((d.adjXgH||d.hxg)||0).toFixed(2), axg=((d.adjXgA||d.axg)||0).toFixed(2);
-  var hWin=b.hw?b.hw.pct:0, aWin=b.aw?b.aw.pct:0, dr=b.draw?b.draw.pct:0;
-  var over=b.over?b.over.pct:0, btts=b.btts?b.btts.pct:0;
-  var values=b.values&&b.values.length?b.values.map(function(v){return v.label+' (edge +'+v.val.edge+'%)';}).join(', '):'aucune';
-  var best=b.best?b.best.label+' ('+b.best.pct+'%)':'NO BET';
+  var hxg=((d.adjXgH||d.hxg)||0).toFixed(2),axg=((d.adjXgA||d.axg)||0).toFixed(2);
+  var hWin=b.hw?b.hw.pct:0,aWin=b.aw?b.aw.pct:0,dr=b.draw?b.draw.pct:0;
+  var over=b.over?b.over.pct:0,btts=b.btts?b.btts.pct:0;
+  var vals=b.values&&b.values.length?b.values.map(function(v){return v.label+' (edge +'+v.val.edge+'%)';}).join(', '):'aucune';
   var conf=b.signalLevel||0;
   var confTxt=conf>=3?'Fort (8/10)':conf>=2?'Bon (6/10)':conf>=1?'Moyen (4/10)':'Faible (2/10)';
-  var txt='Analyse : ';
-  txt+=d.ht+' (xG/match '+hxg+') vs '+d.at+' (xG/match '+axg+'). ';
+  var txt='Analyse : '+d.ht+' (xG/match '+hxg+') vs '+d.at+' (xG/match '+axg+'). ';
   if(hWin>aWin+10) txt+=d.ht+' favori ('+hWin+'% vs '+aWin+'%). ';
   else if(aWin>hWin+10) txt+=d.at+' favori ('+aWin+'% vs '+hWin+'%). ';
   else txt+='Match équilibré ('+d.ht+' '+hWin+'% / Nul '+dr+'% / '+d.at+' '+aWin+'%). ';
@@ -1263,67 +1259,48 @@ function buildLocalTipster(d){
   if(btts>=55) txt+='BTTS probable ('+btts+'%). ';
   if(d.hr>115) txt+=d.ht+' surperforme ('+Math.round(d.hr)+'%), régression possible. ';
   if(d.ar!=null&&d.ar<85) txt+=d.at+' sous-performe ('+Math.round(d.ar)+'%), réveil possible. ';
-  txt+='
-Value Bet : '+(values!=='aucune'?values:best)+'.';
-  txt+='
-Confiance : '+confTxt+'.';
-  if(!b.signal||b.signal==='NO BET') txt+='
-À éviter : signal insuffisant selon les xG.';
+  txt+='\nValue Bet : '+(vals!=='aucune'?vals:(b.best?b.best.label+' ('+b.best.pct+'%)':'NO BET'))+'.';
+  txt+='\nConfiance : '+confTxt+'.';
   return txt;
 }
 
-function showMissingForm(missing, d, hn, an, odds, absentHome, absentAway){
+function showMissingForm(missing,d,hn,an,odds,absentHome,absentAway){
   var rep=document.getElementById('rep');
   rep.style.display='block';
-  // Vider le rapport et afficher le formulaire
   var html='<div style="background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.3);border-radius:14px;padding:18px;margin-bottom:14px;">';
-  html+='<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--rd);letter-spacing:2px;margin-bottom:12px;">⚠ DONNÉES MANQUANTES — SAISIE OBLIGATOIRE</div>';
-  html+='<div style="font-size:13px;color:var(--mt);margin-bottom:16px;">Ces valeurs sont sur tes screenshots mais n'ont pas été lues. Saisis-les pour lancer l'analyse :</div>';
-  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:16px;">';
+  html+='<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--rd);letter-spacing:2px;margin-bottom:10px;">⚠ DONNÉES MANQUANTES — SAISIE REQUISE</div>';
+  html+='<div style="font-size:12px;color:var(--mt);margin-bottom:14px;">Ces valeurs sont visibles sur tes screenshots mais n'ont pas été lues. Saisis-les pour lancer l'analyse complète :</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px;">';
   missing.forEach(function(m){
     var col=m.side==='h'?'var(--bl)':'var(--or)';
-    html+='<div style="background:var(--sf2);border-radius:10px;padding:12px;">';
-    html+='<div style="font-family:DM Mono,monospace;font-size:10px;color:'+col+';margin-bottom:6px;">'+m.field+' — '+m.team+'</div>';
-    html+='<input id="'+m.id+'" type="number" step="0.01" min="0" placeholder="ex: 38.5" style="width:100%;background:var(--sf);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:8px 10px;color:var(--tx);font-family:DM Mono,monospace;font-size:14px;outline:none;" oninput="checkMissingComplete()">';
+    html+='<div style="background:var(--sf2);border-radius:10px;padding:10px;">';
+    html+='<div style="font-family:DM Mono,monospace;font-size:10px;color:'+col+';margin-bottom:5px;">'+m.field+' — '+m.team+'</div>';
+    html+='<input id="'+m.id+'" type="number" step="0.01" min="0" placeholder="ex: 38.5" style="width:100%;background:var(--sf);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:7px 9px;color:var(--tx);font-family:DM Mono,monospace;font-size:13px;outline:none;" oninput="checkMissingComplete()">';
     html+='</div>';
   });
   html+='</div>';
-  html+='<button id="btnMissingOk" onclick="submitMissingData()" disabled style="width:100%;padding:12px;background:rgba(124,58,237,.3);border:1px solid rgba(124,58,237,.4);border-radius:10px;color:#c4b5fd;font-family:DM Mono,monospace;font-size:12px;letter-spacing:2px;cursor:not-allowed;transition:all .2s;">REMPLIS TOUS LES CHAMPS POUR ANALYSER</button>';
+  html+='<button id="btnMissingOk" onclick="submitMissingData()" disabled style="width:100%;padding:11px;background:rgba(124,58,237,.25);border:1px solid rgba(124,58,237,.3);border-radius:10px;color:#9ca3af;font-family:DM Mono,monospace;font-size:12px;letter-spacing:2px;cursor:not-allowed;">REMPLIS TOUS LES CHAMPS</button>';
   html+='</div>';
   rep.innerHTML=html;
-  // Stocker les données en attente
   window._pendingMissing={missing:missing,d:d,hn:hn,an:an,odds:odds,absentHome:absentHome,absentAway:absentAway};
 }
 
 function checkMissingComplete(){
-  if(!window._pendingMissing) return;
-  var allFilled=window._pendingMissing.missing.every(function(m){
-    var el=document.getElementById(m.id);
-    return el&&el.value&&parseFloat(el.value)>0;
-  });
-  var btn=document.getElementById('btnMissingOk');
-  if(!btn) return;
-  if(allFilled){
-    btn.disabled=false;
-    btn.style.background='linear-gradient(135deg,var(--ac2),#5b21b6)';
-    btn.style.color='#fff';
-    btn.style.cursor='pointer';
-    btn.textContent='↗ LANCER L'ANALYSE';
-  } else {
-    btn.disabled=true;
-    btn.style.background='rgba(124,58,237,.3)';
-    btn.style.color='#c4b5fd';
-    btn.style.cursor='not-allowed';
-    btn.textContent='REMPLIS TOUS LES CHAMPS POUR ANALYSER';
-  }
+  if(!window._pendingMissing)return;
+  var ok=window._pendingMissing.missing.every(function(m){var el=document.getElementById(m.id);return el&&el.value&&parseFloat(el.value)>0;});
+  var btn=document.getElementById('btnMissingOk');if(!btn)return;
+  btn.disabled=!ok;
+  btn.style.background=ok?'linear-gradient(135deg,var(--ac2),#5b21b6)':'rgba(124,58,237,.25)';
+  btn.style.color=ok?'#fff':'#9ca3af';
+  btn.style.cursor=ok?'pointer':'not-allowed';
+  btn.textContent=ok?'↗ LANCER L'ANALYSE':'REMPLIS TOUS LES CHAMPS';
 }
 
 async function submitMissingData(){
-  if(!window._pendingMissing) return;
+  if(!window._pendingMissing)return;
   var p=window._pendingMissing;
   var d=p.d;
-  // Injecter les valeurs saisies dans les raw data
-  var hRaw=window._lastHomeRaw||{}; var aRaw=window._lastAwayRaw||{};
+  var hRaw=window._lastHomeRaw||{};var aRaw=window._lastAwayRaw||{};
   p.missing.forEach(function(m){
     var val=parseFloat(document.getElementById(m.id).value);
     if(m.id==='mfill_hxg'){d.hxg=val;hRaw.team_xG_total=val;}
@@ -1333,23 +1310,19 @@ async function submitMissingData(){
     if(m.id==='mfill_hs'){d.hs=val;hRaw.team_goals_total=val;}
     if(m.id==='mfill_as'){d.as=val;aRaw.team_goals_total=val;}
   });
-  window._lastHomeRaw=hRaw; window._lastAwayRaw=aRaw;
-  // Reconstruire avec toutes les données
-  if(!hRaw.team_name) hRaw.team_name=d.ht;
-  if(!aRaw.team_name) aRaw.team_name=d.at;
-  if(!hRaw.team_xG_total) hRaw.team_xG_total=d.hxg;
-  if(!aRaw.team_xG_total) aRaw.team_xG_total=d.axg;
+  if(!hRaw.team_name)hRaw.team_name=d.ht;
+  if(!aRaw.team_name)aRaw.team_name=d.at;
+  if(!hRaw.team_xG_total)hRaw.team_xG_total=d.hxg;
+  if(!aRaw.team_xG_total)aRaw.team_xG_total=d.axg;
+  window._lastHomeRaw=hRaw;window._lastAwayRaw=aRaw;
   var newD=buildMatchData(hRaw,aRaw,p.hn,p.an,p.odds,p.absentHome,p.absentAway);
-  window._lastMatchData=newD;
-  window._pendingMissing=null;
-  // Tipster avec fallback local
-  try {
-    var _tipTO=new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},8000);});
-    var _tipFetch=fetch('/api/tipster',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({matchData:{ht:newD.ht,at:newD.at,hxg:newD.hxg,axg:newD.axg,hxga:newD.hxga,axga:newD.axga,bets:newD.bets}})}).then(function(r){return r.json();});
-    var tdata=await Promise.race([_tipFetch,_tipTO]);
-    if(tdata&&tdata.analysis) newD._tipsterAnalysis=tdata.analysis;
-    else newD._tipsterAnalysis=buildLocalTipster(newD);
-  } catch(e){ newD._tipsterAnalysis=buildLocalTipster(newD); }
+  window._lastMatchData=newD;window._pendingMissing=null;
+  try{
+    var _t=new Promise(function(_,r){setTimeout(function(){r(new Error('to'));},8000);});
+    var _f=fetch('/api/tipster',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({matchData:{ht:newD.ht,at:newD.at,hxg:newD.hxg,axg:newD.axg,hxga:newD.hxga,axga:newD.axga,bets:newD.bets}})}).then(function(r){return r.json();});
+    var td=await Promise.race([_f,_t]);
+    if(td&&td.analysis)newD._tipsterAnalysis=td.analysis;else newD._tipsterAnalysis=buildLocalTipster(newD);
+  }catch(e){newD._tipsterAnalysis=buildLocalTipster(newD);}
   renderReport(newD);
 }
 
@@ -1375,14 +1348,10 @@ function mergeSide(results){
     var vals=all.map(function(r){return r[f];}).filter(function(v){return v!=null&&!isNaN(v);});
     m[f]=vals.length?parseFloat((vals.reduce(function(a,b){return a+b;},0)/vals.length).toFixed(2)):null;
   });
-  var _aliases={'team_xG_total':['xG','xg','xG_total','season_xG'],'team_xGA_total':['xGA','xga','xGA_total','season_xGA','xGa'],'team_goals_total':['goals','goals_scored','buts','scored']};
-  Object.keys(_aliases).forEach(function(target){
-    if(m[target]!=null)return;
-    _aliases[target].forEach(function(alias){
-      if(m[target]!=null)return;
-      var vals=all.map(function(r){return r[alias];}).filter(function(v){return v!=null&&!isNaN(parseFloat(v));});
-      if(vals.length)m[target]=parseFloat((vals.reduce(function(a,b){return a+parseFloat(b);},0)/vals.length).toFixed(2));
-    });
+  var _al={'team_xG_total':['xG','xg','xG_total'],'team_xGA_total':['xGA','xga','xGa','xGA_total'],'team_goals_total':['goals','goals_scored','buts']};
+  Object.keys(_al).forEach(function(t){
+    if(m[t]!=null)return;
+    _al[t].forEach(function(a){if(m[t]!=null)return;var v=all.map(function(r){return r[a];}).filter(function(x){return x!=null&&!isNaN(parseFloat(x));});if(v.length)m[t]=parseFloat((v.reduce(function(a,b){return a+parseFloat(b);},0)/v.length).toFixed(2));});
   });
   ['home_team','away_team','home_status','away_status','team_name','value_bet','analysis'].forEach(function(f){
     var found=all.map(function(r){return r[f];}).find(function(v){return v!=null&&v!=='';});
@@ -1399,8 +1368,8 @@ function buildMatchData(hm,am,hn,an,odds,absentHome,absentAway){
   var d={};
   d.ht=hn||(hm&&(hm.team_name||hm.home_team))||'Domicile';
   d.at=an||(am&&(am.team_name||am.away_team))||'Exterieur';
-  d.hs=hm?(hm.home_score!=null?hm.home_score:(hm.team_goals_total!=null?hm.team_goals_total:(hm.goals!=null?hm.goals:(hm.goals_scored!=null?hm.goals_scored:(hm.buts!=null?hm.buts:null))))):null;
-  d.as=am?(am.away_score!=null?am.away_score:(am.team_goals_total!=null?am.team_goals_total:(am.goals!=null?am.goals:(am.goals_scored!=null?am.goals_scored:(am.buts!=null?am.buts:null))))):null;
+  d.hs=hm?(hm.home_score!=null?hm.home_score:(hm.team_goals_total!=null?hm.team_goals_total:(hm.goals!=null?hm.goals:(hm.goals_scored!=null?hm.goals_scored:null)))):null;
+  d.as=am?(am.away_score!=null?am.away_score:(am.team_goals_total!=null?am.team_goals_total:(am.goals!=null?am.goals:(am.goals_scored!=null?am.goals_scored:null)))):null;
   d.hxg=hm?(hm.team_xG_total!=null?hm.team_xG_total:(hm.home_xG!=null?hm.home_xG:null)):null;
   d.axg=am?(am.team_xG_total!=null?am.team_xG_total:(am.away_xG!=null?am.away_xG:null)):null;
   d.hxga=hm?(hm.team_xGA_total!=null?hm.team_xGA_total:(hm.home_xGA!=null?hm.home_xGA:(hm.xGA!=null?hm.xGA:(hm.xga!=null?hm.xga:null)))):null;
