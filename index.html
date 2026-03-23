@@ -2318,12 +2318,16 @@ async function loadDayTeamFiles(files, side){
 function findTeamData(name){
   var allData=(_dayHomeData||[]).concat(_dayAwayData||[]);
   if(!allData.length) return null;
-  var n=(name||'').toLowerCase();
-  var n1=n.split(' ')[0];
+  var n=(name||'').toLowerCase().trim();
+  var words=n.split(' ').filter(function(w){return w.length>2;});
   return allData.find(function(t){
-    var tn=(t.team_name||t._name||'').toLowerCase();
-    var tn1=tn.split(' ')[0];
-    return tn===n||tn.indexOf(n1)>=0||n1.indexOf(tn1)>=0;
+    var tn=(t.team_name||t._name||'').toLowerCase().trim();
+    // Exact match
+    if(tn===n) return true;
+    // First word match (Arsenal -> Arsenal FC)
+    var tw=tn.split(' ').filter(function(w){return w.length>2;});
+    // Any word in common
+    return words.some(function(w){return tw.some(function(tw2){return tw2===w||tw2.indexOf(w)===0||w.indexOf(tw2)===0;});});
   })||null;
 }
 
@@ -2331,21 +2335,8 @@ async function analyzeDaySelected(){
   var selected=_dayMatches_list.filter(function(m){return m.selected;});
   if(!selected.length) return;
 
-  // Filter: only analyze matches with data
-  var hasAnyData=(_dayHomeData.length+_dayAwayData.length)>0;
-  var toAnalyze=[];
-  if(hasAnyData){
-    selected.forEach(function(m){
-      if(m.homeData||m.awayData) toAnalyze.push(m);
-    });
-    if(!toAnalyze.length){
-      var s=document.getElementById('dayHomeStatus')||document.getElementById('dayAllStatus');
-      if(s){s.textContent='Aucun match ne correspond. Verifie les noms.';s.style.color='var(--rd)';}
-      return;
-    }
-  } else {
-    toAnalyze=selected;
-  }
+  // Use all selected matches - findTeamData will match by name
+  var toAnalyze=selected;
 
   document.getElementById('dayLoader').style.display='block';
   document.getElementById('btnDay').disabled=true;
@@ -2356,8 +2347,8 @@ async function analyzeDaySelected(){
   for(var i=0;i<toAnalyze.length;i++){
     document.getElementById('dayLbl').textContent='Match '+(i+1)+'/'+toAnalyze.length+': '+toAnalyze[i].ht+' vs '+toAnalyze[i].at;
     var m=toAnalyze[i];
-    var hData=m.homeData||findTeamData(m.ht)||null;
-    var aData=m.awayData||findTeamData(m.at)||null;
+    var hData=findTeamData(m.ht)||null;
+    var aData=findTeamData(m.at)||null;
     var d=buildMatchData(hData,aData,m.ht,m.at,{});
     matches.push(d);
   }
