@@ -1196,7 +1196,8 @@ async function doAnalyze(){
     updateMemBar();
     setProg(90,'Fusion...');
     await new Promise(function(r){setTimeout(r,250);});
-    window._lastHomeRaw=hm; window._lastAwayRaw=am;
+    window._lastHomeRaw=hm?JSON.parse(JSON.stringify(hm)):null;
+    window._lastAwayRaw=am?JSON.parse(JSON.stringify(am)):null;
     var d=buildMatchData(hm,am,hn,an,odds,absentHome,absentAway);
     setProg(100,'Termine !');
     await new Promise(function(r){setTimeout(r,200);});
@@ -1244,19 +1245,22 @@ function setProg(pct,lbl){document.getElementById('pgf').style.width=pct+'%';doc
 function reanalyzeWithXga(){
   if(!window._lastMatchData) return;
   var d=window._lastMatchData;
-  var inH=document.getElementById('manualXga_h');
-  var inA=document.getElementById('manualXga_a');
-  if(inH&&inH.value) d.hxga=parseFloat(inH.value);
-  if(inA&&inA.value) d.axga=parseFloat(inA.value);
-  // Patcher les objets source originaux si disponibles
-  if(window._lastHomeRaw) window._lastHomeRaw.team_xGA_total=d.hxga;
-  if(window._lastAwayRaw) window._lastAwayRaw.team_xGA_total=d.axga;
-  var newD=buildMatchData(
-    window._lastHomeRaw||null,
-    window._lastAwayRaw||null,
-    d.ht,d.at,d.odds||{}
-  );
+  // Lire les valeurs saisies
+  var inH=document.getElementById('manualXga_h'); if(inH&&inH.value) d.hxga=parseFloat(inH.value);
+  var inA=document.getElementById('manualXga_a'); if(inA&&inA.value) d.axga=parseFloat(inA.value);
+  var inBH=document.getElementById('manualButs_h'); if(inBH&&inBH.value) d.hs=parseFloat(inBH.value);
+  var inBA=document.getElementById('manualButs_a'); if(inBA&&inBA.value) d.as=parseFloat(inBA.value);
+  // Patcher les raw et reconstruire
+  var hRaw=window._lastHomeRaw||{}; var aRaw=window._lastAwayRaw||{};
+  hRaw.team_xGA_total=d.hxga; hRaw.xGA=d.hxga; hRaw.team_goals_total=d.hs;
+  aRaw.team_xGA_total=d.axga; aRaw.xGA=d.axga; aRaw.team_goals_total=d.as;
+  if(!hRaw.team_xG_total) hRaw.team_xG_total=d.hxg;
+  if(!aRaw.team_xG_total) aRaw.team_xG_total=d.axg;
+  if(!hRaw.team_name) hRaw.team_name=d.ht;
+  if(!aRaw.team_name) aRaw.team_name=d.at;
+  var newD=buildMatchData(hRaw,aRaw,d.ht,d.at,d.odds||{});
   window._lastMatchData=newD;
+  window._lastHomeRaw=hRaw; window._lastAwayRaw=aRaw;
   renderReport(newD);
 }
 
@@ -1282,6 +1286,20 @@ function mergeSide(results){
     var vals=all.map(function(r){return r[f];}).filter(function(v){return v!=null&&!isNaN(v);});
     m[f]=vals.length?parseFloat((vals.reduce(function(a,b){return a+b;},0)/vals.length).toFixed(2)):null;
   });
+  // Aliases: accepter les variantes de noms retournées par le serveur
+  var aliases={
+    'team_xG_total':['xG','xg','xG_total','season_xG','total_xG'],
+    'team_xGA_total':['xGA','xga','xGA_total','season_xGA','total_xGA','xGa'],
+    'team_goals_total':['goals','goals_scored','goals_total','buts','scored']
+  };
+  Object.keys(aliases).forEach(function(target){
+    if(m[target]!=null) return; // déjà trouvé
+    aliases[target].forEach(function(alias){
+      if(m[target]!=null) return;
+      var vals=all.map(function(r){return r[alias];}).filter(function(v){return v!=null&&!isNaN(parseFloat(v));});
+      if(vals.length) m[target]=parseFloat((vals.reduce(function(a,b){return a+parseFloat(b);},0)/vals.length).toFixed(2));
+    });
+  });
   ['home_team','away_team','home_status','away_status','team_name','value_bet','analysis'].forEach(function(f){
     var found=all.map(function(r){return r[f];}).find(function(v){return v!=null&&v!=='';});
     m[f]=found||null;
@@ -1297,12 +1315,12 @@ function buildMatchData(hm,am,hn,an,odds,absentHome,absentAway){
   var d={};
   d.ht=hn||(hm&&(hm.team_name||hm.home_team))||'Domicile';
   d.at=an||(am&&(am.team_name||am.away_team))||'Exterieur';
-  d.hs=hm?(hm.home_score!=null?hm.home_score:(hm.team_goals_total!=null?hm.team_goals_total:null)):null;
-  d.as=am?(am.away_score!=null?am.away_score:(am.team_goals_total!=null?am.team_goals_total:null)):null;
+  d.hs=hm?(hm.home_score!=null?hm.home_score:(hm.team_goals_total!=null?hm.team_goals_total:(hm.goals!=null?hm.goals:(hm.goals_scored!=null?hm.goals_scored:(hm.buts!=null?hm.buts:null))))):null;
+  d.as=am?(am.away_score!=null?am.away_score:(am.team_goals_total!=null?am.team_goals_total:(am.goals!=null?am.goals:(am.goals_scored!=null?am.goals_scored:(am.buts!=null?am.buts:null))))):null;
   d.hxg=hm?(hm.team_xG_total!=null?hm.team_xG_total:(hm.home_xG!=null?hm.home_xG:null)):null;
   d.axg=am?(am.team_xG_total!=null?am.team_xG_total:(am.away_xG!=null?am.away_xG:null)):null;
-  d.hxga=hm?(hm.team_xGA_total!=null?hm.team_xGA_total:(hm.home_xGA!=null?hm.home_xGA:null)):null;
-  d.axga=am?(am.team_xGA_total!=null?am.team_xGA_total:(am.away_xGA!=null?am.away_xGA:null)):null;
+  d.hxga=hm?(hm.team_xGA_total!=null?hm.team_xGA_total:(hm.home_xGA!=null?hm.home_xGA:(hm.xGA!=null?hm.xGA:(hm.xga!=null?hm.xga:null)))):null;
+  d.axga=am?(am.team_xGA_total!=null?am.team_xGA_total:(am.away_xGA!=null?am.away_xGA:(am.xGA!=null?am.xGA:(am.xga!=null?am.xga:null)))):null;
   if(d.hs!=null&&d.hxg)d.hr=parseFloat(((d.hs/d.hxg)*100).toFixed(1));else d.hr=hm?hm.home_realization||null:null;
   if(d.as!=null&&d.axg)d.ar=parseFloat(((d.as/d.axg)*100).toFixed(1));else d.ar=am?am.away_realization||null:null;
   d.hst=d.hr==null?'inconnu':d.hr>110?'surperformance':d.hr<90?'sous-performance':'normal';
@@ -1332,7 +1350,7 @@ function buildMatchData(hm,am,hn,an,odds,absentHome,absentAway){
         if(!xg90 && p.xG && p.apps) xg90 = parseFloat(p.xG) / parseFloat(p.apps);
         // Convert xG90 to % probability of scoring in ONE match
         // xG90=0.42 means 42% chance per 90min match
-        var pct2 = Math.min(Math.round((1 - Math.exp(-xg90)) * 100), 55);
+        var pct2 = Math.min(Math.round(xg90 * 100), 75);
         if(pt.includes(htf2))d.lgScorers.push(Object.assign({},p,{_sd:'h',score_probability:pct2}));
         if(pt.includes(atf2))d.lgScorers.push(Object.assign({},p,{_sd:'a',score_probability:pct2}));
       });
@@ -1342,10 +1360,7 @@ function buildMatchData(hm,am,hn,an,odds,absentHome,absentAway){
   function calcScorePct(s){
     var xg90 = s.xG90 ? parseFloat(s.xG90) : 0;
     if(!xg90 && s.xG && s.apps) xg90 = parseFloat(s.xG) / parseFloat(s.apps);
-    if(!xg90 && s.xG && s.matches_played) xg90 = parseFloat(s.xG) / parseFloat(s.matches_played);
-    // P(marquer au moins 1 but) = 1 - e^(-xG90), capper à 55%
-    var prob = xg90 > 0 ? Math.round((1 - Math.exp(-xg90)) * 100) : 0;
-    return Math.min(prob, 55);
+    return Math.min(Math.round(xg90 * 100), 75);
   }
   function scorerEdge(pct, cote){
     if(!cote||!pct) return null;
@@ -1760,35 +1775,30 @@ function renderReport(d){
       +'</div>';
   }
   document.getElementById('tcols').innerHTML=tcard(d.ht,d.hs,d.hxg,d.hxga,d.hr,d.hst,'home',d.hstand)+tcard(d.at,d.as,d.axg,d.axga,d.ar,d.ast,'away',d.astand);
-  // Bannière xGA manquant
+  // Banniere données manquantes
   var xgaWarnEl=document.getElementById('xgaWarn');
-  if(!xgaWarnEl){
-    xgaWarnEl=document.createElement('div');
-    xgaWarnEl.id='xgaWarn';
-    var rep=document.getElementById('tcols');
-    rep.parentNode.insertBefore(xgaWarnEl,rep.nextSibling);
-  }
-  var missingXga=[];
-  if(d.hxga==null) missingXga.push({team:d.ht,side:'h'});
-  if(d.axga==null) missingXga.push({team:d.at,side:'a'});
-  if(missingXga.length){
-    var whtml='<div style="background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.3);border-radius:12px;padding:12px 15px;margin-bottom:12px;">';
-    whtml+='<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--rd);letter-spacing:2px;margin-bottom:10px;">⚠ xGA MANQUANT — ANALYSE INCOMPLÈTE</div>';
-    whtml+='<div style="font-size:12px;color:var(--mt);margin-bottom:10px;">Entre le xGA manuellement pour une analyse précise :</div>';
+  if(!xgaWarnEl){xgaWarnEl=document.createElement('div');xgaWarnEl.id='xgaWarn';var tcolsEl=document.getElementById('tcols');tcolsEl.parentNode.insertBefore(xgaWarnEl,tcolsEl.nextSibling);}
+  var missingFields=[];
+  if(d.hxga==null) missingFields.push({team:d.ht,side:'h',field:'xGA',id:'manualXga_h'});
+  if(d.axga==null) missingFields.push({team:d.at,side:'a',field:'xGA',id:'manualXga_a'});
+  if(d.hs==null)   missingFields.push({team:d.ht,side:'h',field:'Buts',id:'manualButs_h'});
+  if(d.as==null)   missingFields.push({team:d.at,side:'a',field:'Buts',id:'manualButs_a'});
+  if(missingFields.length){
+    var whtml='<div style="background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.3);border-radius:12px;padding:12px 15px;margin:12px 0;">';
+    whtml+='<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--rd);letter-spacing:2px;margin-bottom:8px;">⚠ DONNÉES MANQUANTES — VISIBLES SUR LE SCREENSHOT</div>';
+    whtml+='<div style="font-size:12px;color:var(--mt);margin-bottom:10px;">Entre les valeurs manuellement puis clique Réanalyser :</div>';
     whtml+='<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">';
-    missingXga.forEach(function(mx){
+    missingFields.forEach(function(mx){
+      var col=mx.side==='h'?'var(--bl)':'var(--or)';
       whtml+='<div style="display:flex;align-items:center;gap:6px;">';
-      whtml+='<span style="font-family:DM Mono,monospace;font-size:11px;color:'+(mx.side==="h"?"var(--bl)":"var(--or)")+';">xGA '+mx.team+'</span>';
-      whtml+='<input id="manualXga_'+mx.side+'" type="number" step="0.01" min="0" placeholder="ex: 38.5" style="width:90px;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:5px 8px;color:var(--tx);font-family:DM Mono,monospace;font-size:12px;outline:none;">';
+      whtml+='<span style="font-family:DM Mono,monospace;font-size:11px;color:'+col+';">'+mx.field+' '+mx.team+'</span>';
+      whtml+='<input id="'+mx.id+'" type="number" step="0.01" min="0" placeholder="ex: 38.5" style="width:90px;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:5px 8px;color:var(--tx);font-family:DM Mono,monospace;font-size:12px;outline:none;">';
       whtml+='</div>';
     });
     whtml+='<button onclick="reanalyzeWithXga()" style="padding:7px 16px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:8px;color:#fff;font-family:DM Mono,monospace;font-size:11px;cursor:pointer;font-weight:700;">↻ Réanalyser</button>';
     whtml+='</div></div>';
-    xgaWarnEl.innerHTML=whtml;
-    xgaWarnEl.style.display='block';
-  } else {
-    xgaWarnEl.style.display='none';
-  }
+    xgaWarnEl.innerHTML=whtml; xgaWarnEl.style.display='block';
+  } else { xgaWarnEl.style.display='none'; }
   // Scorers
   _currentMatchData=d;
   renderScorers(d,'all');
