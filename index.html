@@ -2374,7 +2374,7 @@ function renderDayResults(matches){
   var html='<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:2px;margin-bottom:12px;">'+matches.length+' MATCHS - CLIQUER POUR DETAIL</div>';
   matches.forEach(function(d,i){
     var b=d.bets||{};
-    var slvl=b.signalLevel||0;
+    var slvl=b&&b.signalLevel||0;
     var scol=slvl>=3?'var(--gr)':slvl>=2?'var(--gd)':slvl>=1?'var(--ac)':'var(--mt)';
     html+='<div style="background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:14px;margin-bottom:10px;cursor:pointer;" onclick="loadDayMatch('+i+')">';
     html+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px;">';
@@ -2382,9 +2382,10 @@ function renderDayResults(matches){
     html+='<span style="font-family:Bebas Neue,sans-serif;font-size:13px;color:'+scol+';">'+(b.signal||'NO BET')+'</span>';
     html+='</div>';
     html+='<div style="display:flex;gap:10px;flex-wrap:wrap;">';
-    if(d.hxg) html+='<span style="font-size:11px;color:var(--mt);">xG '+d.hxg.toFixed(2)+' vs '+d.axg.toFixed(2)+'</span>';
-    if(b.best) html+='<span style="font-size:11px;color:var(--gd);">'+b.best.label+' '+b.best.pct+'%</span>';
-    if(b.values&&b.values.length) html+='<span style="font-size:11px;color:var(--gr);">VALUE: '+b.values.map(function(v){return v.label+' +'+v.val.edge+'%';}).join(' | ')+'</span>';
+    var hxgVal=d.hxg||d.adjXgH||0; var axgVal=d.axg||d.adjXgA||0;
+    if(hxgVal||axgVal) html+='<span style="font-size:11px;color:var(--mt);">xG '+(hxgVal?hxgVal.toFixed(2):'-')+' vs '+(axgVal?axgVal.toFixed(2):'-')+'</span>';
+    if(b&&b.best) html+='<span style="font-size:11px;color:var(--gd);">'+b.best.label+' '+b.best.pct+'%</span>';
+    if(b&&b.values&&b.values.length) html+='<span style="font-size:11px;color:var(--gr);">VALUE: '+b.values.map(function(v){return v.label+' +'+v.val.edge+'%';}).join(' | ')+'</span>';
     html+='</div></div>';
   });
   if(el) el.innerHTML=html;
@@ -2674,7 +2675,7 @@ function renderDayResults(matches){
   var html='<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:2px;margin-bottom:12px;">'+matches.length+' MATCHS - CLIQUER POUR VOIR LE DETAIL</div>';
   matches.forEach(function(d,i){
     var b=d.bets||{};
-    var slvl=b.signalLevel||0;
+    var slvl=b&&b.signalLevel||0;
     var scol=slvl>=3?'var(--gr)':slvl>=2?'var(--gd)':slvl>=1?'var(--ac)':'var(--mt)';
     html+='<div style="background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:14px;margin-bottom:10px;cursor:pointer;" onclick="loadDayMatch('+i+')">';
     html+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px;">';
@@ -2682,9 +2683,10 @@ function renderDayResults(matches){
     html+='<span style="font-family:Bebas Neue,sans-serif;font-size:13px;color:'+scol+';">'+(b.signal||'NO BET')+'</span>';
     html+='</div>';
     html+='<div style="display:flex;gap:10px;flex-wrap:wrap;">';
-    if(d.hxg) html+='<span style="font-size:11px;color:var(--mt);">xG '+d.hxg.toFixed(2)+' vs '+d.axg.toFixed(2)+'</span>';
-    if(b.best) html+='<span style="font-size:11px;color:var(--gd);">'+b.best.label+' '+b.best.pct+'%</span>';
-    if(b.values&&b.values.length) html+='<span style="font-size:11px;color:var(--gr);">VALUE: '+b.values.map(function(v){return v.label+' +'+v.val.edge+'%';}).join(' | ')+'</span>';
+    var hxgVal=d.hxg||d.adjXgH||0; var axgVal=d.axg||d.adjXgA||0;
+    if(hxgVal||axgVal) html+='<span style="font-size:11px;color:var(--mt);">xG '+(hxgVal?hxgVal.toFixed(2):'-')+' vs '+(axgVal?axgVal.toFixed(2):'-')+'</span>';
+    if(b&&b.best) html+='<span style="font-size:11px;color:var(--gd);">'+b.best.label+' '+b.best.pct+'%</span>';
+    if(b&&b.values&&b.values.length) html+='<span style="font-size:11px;color:var(--gr);">VALUE: '+b.values.map(function(v){return v.label+' +'+v.val.edge+'%';}).join(' | ')+'</span>';
     html+='</div></div>';
   });
   document.getElementById('dayResults').innerHTML=html;
