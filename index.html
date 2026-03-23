@@ -299,6 +299,21 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
     </div>
   </div>
 
+  <!-- ABSENCES -->
+  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:13px 15px;margin-bottom:13px;">
+    <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--rd);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Absents / Suspendus (optionnel)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <div style="font-size:11px;color:var(--bl);font-family:DM Mono,monospace;margin-bottom:5px;">DOM absents</div>
+        <input id="absentHome" type="text" placeholder="ex: Isak, Gordon" oninput="saveAbsents()" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--tx);font-family:DM Sans,sans-serif;font-size:13px;outline:none;">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--or);font-family:DM Mono,monospace;margin-bottom:5px;">EXT absents</div>
+        <input id="absentAway" type="text" placeholder="ex: Watkins, McGinn" oninput="saveAbsents()" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;color:var(--tx);font-family:DM Sans,sans-serif;font-size:13px;outline:none;">
+      </div>
+    </div>
+  </div>
+
   <!-- COTES -->
   <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:14px;margin-bottom:14px;">
     <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--ac);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Cotes du match (optionnel)</div>
@@ -1063,6 +1078,12 @@ async function doAnalyze(){
   document.getElementById('bana').disabled=true;
   var hn=document.getElementById('hn').value.trim();
   var an=document.getElementById('an').value.trim();
+  // Parse absent players
+  saveAbsents(); // save with current team names
+  var absentHomeStr=document.getElementById('absentHome').value.trim();
+  var absentAwayStr=document.getElementById('absentAway').value.trim();
+  var absentHome=absentHomeStr?absentHomeStr.split(',').map(function(s){return s.trim().toLowerCase();}):[];
+  var absentAway=absentAwayStr?absentAwayStr.split(',').map(function(s){return s.trim().toLowerCase();}):[];
   var odds={
     home:   parseFloat(document.getElementById('oddHome').value)||null,
     draw:   parseFloat(document.getElementById('oddDraw').value)||null,
@@ -1105,7 +1126,7 @@ async function doAnalyze(){
     updateMemBar();
     setProg(90,'Fusion...');
     await new Promise(function(r){setTimeout(r,250);});
-    var d=buildMatchData(hm,am,hn,an,odds);
+    var d=buildMatchData(hm,am,hn,an,odds,absentHome,absentAway);
     setProg(100,'Termine !');
     await new Promise(function(r){setTimeout(r,200);});
     document.getElementById('pgw').style.display='none';
@@ -1182,7 +1203,7 @@ function mergeSide(results){
   return m;
 }
 
-function buildMatchData(hm,am,hn,an,odds){
+function buildMatchData(hm,am,hn,an,odds,absentHome,absentAway){
   var d={};
   d.ht=hn||(hm&&(hm.team_name||hm.home_team))||'Domicile';
   d.at=an||(am&&(am.team_name||am.away_team))||'Exterieur';
@@ -1257,7 +1278,19 @@ function buildMatchData(hm,am,hn,an,odds){
   hs.concat(as2).concat(d.lgScorers||[]).concat(uploadedHome).concat(uploadedAway).forEach(function(s){
     if(s&&s.name&&(!sm[s.name]||(s.score_probability||0)>(sm[s.name].score_probability||0)))sm[s.name]=s;
   });
-  d.scorers=Object.values(sm).sort(function(a,b){return (b.score_probability||0)-(a.score_probability||0);}).slice(0,8);
+  // Filter absent/suspended players
+  var ahList=absentHome||[];
+  var aaList=absentAway||[];
+  d.scorers=Object.values(sm).filter(function(s){
+    var nm=(s.name||'').toLowerCase();
+    if(s._sd==='h') return !ahList.find(function(a){return nm.indexOf(a)>=0||a.indexOf(nm.split(' ')[0])>=0;});
+    if(s._sd==='a') return !aaList.find(function(a){return nm.indexOf(a)>=0||a.indexOf(nm.split(' ')[0])>=0;});
+    return true;
+  }).sort(function(a,b){return (b.score_probability||0)-(a.score_probability||0);}).slice(0,8);
+
+  // Mark absents for display
+  d.absentHome=ahList;
+  d.absentAway=aaList;
   d.odds=odds||{};
   // --- SET PIECE DETECTION ---
   // Boost scorers if team is strong on set pieces
@@ -1570,6 +1603,17 @@ function renderReport(d){
     absHtml+='</div>';
     document.getElementById('rep').insertAdjacentHTML('afterbegin',absHtml);
   }
+  // Show absents warning
+  if((d.absentHome&&d.absentHome.length)||(d.absentAway&&d.absentAway.length)){
+    var absHtml='<div style="background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.2);border-radius:10px;padding:8px 13px;margin-bottom:10px;font-size:11px;font-family:DM Mono,monospace;">';
+    if(d.absentHome&&d.absentHome.length) absHtml+='<span style="color:var(--bl);">DOM absents: '+d.absentHome.join(', ')+'</span> ';
+    if(d.absentAway&&d.absentAway.length) absHtml+='<span style="color:var(--or);">EXT absents: '+d.absentAway.join(', ')+'</span>';
+    absHtml+='</div>';
+    var absEl=document.createElement('div');
+    absEl.innerHTML=absHtml;
+    document.getElementById('rep').insertBefore(absEl, document.getElementById('mhdr'));
+  }
+
   var adjXgInfo='';
   if(d.bets&&d.bets.attackH){
     adjXgInfo='<div style="font-size:10px;color:var(--ac);font-family:DM Mono,monospace;margin-top:4px;">xG/match ajuste: '+d.ht+' '+d.bets.attackH.toFixed(2)+' | '+d.at+' '+d.bets.attackA.toFixed(2)+(d.bets.hasForm?' | Forme ponderee active':'')+'</div>';
@@ -2026,6 +2070,37 @@ function renderScorers(d,mode){
 }
 
 // ================================================================
+// ABSENTS SAUVEGARDE
+// ================================================================
+function saveAbsents(){
+  var hn=(document.getElementById('hn').value||'').trim().toLowerCase();
+  var an=(document.getElementById('an').value||'').trim().toLowerCase();
+  var key='absents_'+hn+'_'+an;
+  var val={
+    home: document.getElementById('absentHome').value||'',
+    away: document.getElementById('absentAway').value||''
+  };
+  try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
+}
+
+function restoreAbsents(){
+  var hn=(document.getElementById('hn').value||'').trim().toLowerCase();
+  var an=(document.getElementById('an').value||'').trim().toLowerCase();
+  if(!hn&&!an) return;
+  var key='absents_'+hn+'_'+an;
+  try{
+    var saved=localStorage.getItem(key);
+    if(saved){
+      var val=JSON.parse(saved);
+      var ah=document.getElementById('absentHome');
+      var aa=document.getElementById('absentAway');
+      if(ah&&!ah.value) ah.value=val.home||'';
+      if(aa&&!aa.value) aa.value=val.away||'';
+    }
+  }catch(e){}
+}
+
+// ================================================================
 // RESET PARTIEL
 // ================================================================
 function resetSide(side){
@@ -2256,6 +2331,17 @@ function loadDayMatch(idx){
 window.addEventListener('load',function(){
   renderHistory();
   renderTracker();
+  // Restore absents if team names already filled
+  restoreAbsents();
+  // Also restore when hn/an change
+  document.getElementById('hn').addEventListener('change', function(){
+    saveAbsents();
+    restoreAbsents();
+  });
+  document.getElementById('an').addEventListener('change', function(){
+    saveAbsents();
+    restoreAbsents();
+  });
 });
 </script>
 </body>
