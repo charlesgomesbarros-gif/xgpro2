@@ -2332,30 +2332,44 @@ function findTeamData(name){
 }
 
 async function analyzeDaySelected(){
-  var selected=_dayMatches_list.filter(function(m){return m.selected;});
-  if(!selected.length) return;
+  try {
+    var selected=_dayMatches_list.filter(function(m){return m.selected;});
+    if(!selected.length){
+      alert('Aucun match selectionne. Upload le calendrier dabord.');
+      return;
+    }
 
-  // Use all selected matches - findTeamData will match by name
-  var toAnalyze=selected;
+    var toAnalyze=selected;
+    var loader=document.getElementById('dayLoader');
+    var btn=document.getElementById('btnDay');
+    var lbl=document.getElementById('dayLbl');
+    var res=document.getElementById('dayResults2');
 
-  document.getElementById('dayLoader').style.display='block';
-  document.getElementById('btnDay').disabled=true;
-  document.getElementById('dayResults2').innerHTML='';
-  document.getElementById('dayLbl').textContent='0/'+toAnalyze.length+' matchs...';
+    if(loader) loader.style.display='block';
+    if(btn) btn.disabled=true;
+    if(res) res.innerHTML='';
+    if(lbl) lbl.textContent='0/'+toAnalyze.length+' matchs...';
 
-  var matches=[];
-  for(var i=0;i<toAnalyze.length;i++){
-    document.getElementById('dayLbl').textContent='Match '+(i+1)+'/'+toAnalyze.length+': '+toAnalyze[i].ht+' vs '+toAnalyze[i].at;
-    var m=toAnalyze[i];
-    var hData=findTeamData(m.ht)||null;
-    var aData=findTeamData(m.at)||null;
-    var d=buildMatchData(hData,aData,m.ht,m.at,{});
-    matches.push(d);
+    var matches=[];
+    for(var i=0;i<toAnalyze.length;i++){
+      if(lbl) lbl.textContent='Match '+(i+1)+'/'+toAnalyze.length+': '+toAnalyze[i].ht+' vs '+toAnalyze[i].at;
+      var m=toAnalyze[i];
+      var hData=findTeamData(m.ht)||null;
+      var aData=findTeamData(m.at)||null;
+      var d=buildMatchData(hData,aData,m.ht,m.at,{});
+      matches.push(d);
+    }
+    if(loader) loader.style.display='none';
+    if(btn) btn.disabled=false;
+    window._dayMatches=matches;
+    renderDayResults(matches);
+  } catch(e) {
+    alert('Erreur analyzeDaySelected: '+e.message+' (ligne: '+(e.lineNumber||e.stack||'?')+')');
+    var btn=document.getElementById('btnDay');
+    var loader=document.getElementById('dayLoader');
+    if(btn) btn.disabled=false;
+    if(loader) loader.style.display='none';
   }
-  document.getElementById('dayLoader').style.display='none';
-  document.getElementById('btnDay').disabled=false;
-  window._dayMatches=matches;
-  renderDayResults(matches);
 }
 
 // Override renderDayResults to use dayResults2
@@ -2623,7 +2637,7 @@ function renderTracker(){
 // JOURNEE COMPLETE
 // ================================================================
 var dayHomeData=[], dayAwayData=[];
-// Listeners geres par DOMContentLoaded (loadDayTeamFiles)
+// Listeners geres par DOMContentLoaded
 
 async function loadDayFiles(files,side){
   var lbl='day'+(side==='home'?'Home':'Away')+'Status';
