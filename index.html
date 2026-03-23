@@ -2199,11 +2199,11 @@ document.addEventListener('DOMContentLoaded', function(){
   });
   var hInput=document.getElementById('dayHomeInput');
   if(hInput) hInput.addEventListener('change',function(){
-    if(this.files&&this.files.length) loadDayTeams(Array.from(this.files),'home');
+    if(this.files&&this.files.length) loadDayTeamFiles(Array.from(this.files),'home');
   });
   var aInput=document.getElementById('dayAwayInput');
   if(aInput) aInput.addEventListener('change',function(){
-    if(this.files&&this.files.length) loadDayTeams(Array.from(this.files),'away');
+    if(this.files&&this.files.length) loadDayTeamFiles(Array.from(this.files),'away');
   });
 });
 
