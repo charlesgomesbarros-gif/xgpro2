@@ -2623,12 +2623,7 @@ function renderTracker(){
 // JOURNEE COMPLETE
 // ================================================================
 var dayHomeData=[], dayAwayData=[];
-document.getElementById('dayHomeInput').addEventListener('change',function(){
-  if(this.files&&this.files.length) loadDayFiles(Array.from(this.files),'home');
-});
-document.getElementById('dayAwayInput').addEventListener('change',function(){
-  if(this.files&&this.files.length) loadDayFiles(Array.from(this.files),'away');
-});
+// Listeners geres par DOMContentLoaded (loadDayTeamFiles)
 
 async function loadDayFiles(files,side){
   var lbl='day'+(side==='home'?'Home':'Away')+'Status';
