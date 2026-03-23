@@ -232,7 +232,7 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
   <button class="tab"     id="tb1">Donnees</button>
   <button class="tab"     id="tb2">Classements</button>
   <button class="tab"     id="tb3">Buteurs</button>
-  <button class="tab"     id="tb4">Tracker</button>
+  <button class="tab"     id="tb4">🎯 Tracker</button>
 </div>
 
 <!-- ═══════════ TAB 0 — ANALYSE ═══════════ -->
@@ -259,6 +259,78 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
       <button onclick="resetSide('away')" style="width:calc(100% - 20px);margin:0 10px 8px;padding:5px;background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.2);border-radius:7px;color:var(--rd);font-family:DM Mono,monospace;font-size:10px;cursor:pointer;">🗑 Reset EXT</button>
     </div>
   </div>
+  <!-- SOUS-ONGLETS ANALYSE -->
+  <div style="display:flex;gap:8px;margin-bottom:13px;">
+    <button onclick="setAnalyseMode('match',this)" id="amMatch"
+      style="flex:1;padding:9px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:10px;color:#fff;font-family:DM Mono,monospace;font-size:11px;cursor:pointer;letter-spacing:1px;-webkit-tap-highlight-color:transparent;">
+      1 MATCH
+    </button>
+    <button onclick="setAnalyseMode('journee',this)" id="amJournee"
+      style="flex:1;padding:9px;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;color:var(--mt);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;letter-spacing:1px;-webkit-tap-highlight-color:transparent;">
+      📅 JOURNEE
+    </button>
+  </div>
+
+  <!-- JOURNEE PANEL -->
+  <div id="journeePanel" style="display:none;">
+    <div style="background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:13px;">
+
+      <!-- ETAPE 1 : Calendrier Understat -->
+      <div style="background:var(--sf2);border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:6px;">1 — CALENDRIER UNDERSTAT</div>
+        <div style="font-size:11px;color:var(--mt);margin-bottom:8px;">Screenshot de la page Understat avec les matchs de la journee.</div>
+        <input type="file" accept="image/*" id="dayCalendarInput" style="position:fixed;top:-999px;opacity:0;width:1px;height:1px;">
+        <button type="button" onclick="document.getElementById('dayCalendarInput').click()" id="dayCalBtn"
+          style="width:100%;padding:9px;background:var(--sf);border:1px dashed rgba(0,229,255,.3);border-radius:9px;color:var(--ac);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+          📅 Screenshot calendrier
+        </button>
+        <div id="dayCalStatus" style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:5px;"></div>
+      </div>
+
+      <!-- MATCHS DETECTES -->
+      <div id="dayMatchList" style="display:none;">
+        <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:6px;">MATCHS DETECTES</div>
+        <div id="dayMatchCheckboxes" style="margin-bottom:10px;"></div>
+
+        <!-- ETAPE 2 : xG DOM -->
+        <div style="background:var(--sf2);border-radius:10px;padding:12px;margin-bottom:8px;">
+          <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--bl);letter-spacing:2px;margin-bottom:6px;">2 — SCREENSHOTS xG DOMICILE</div>
+          <div style="font-size:11px;color:var(--mt);margin-bottom:8px;">Ex: West Ham, Arsenal, Burnley... (plusieurs a la fois OK)</div>
+          <input type="file" accept="image/*" multiple id="dayHomeInput" style="position:fixed;top:-999px;opacity:0;width:1px;height:1px;">
+          <button type="button" onclick="document.getElementById('dayHomeInput').click()"
+            style="width:100%;padding:9px;background:var(--sf);border:1px dashed rgba(59,130,246,.3);border-radius:9px;color:var(--bl);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+            📸 Screenshots equipes DOM
+          </button>
+          <div id="dayHomeStatus" style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:5px;"></div>
+        </div>
+
+        <!-- ETAPE 3 : xG EXT -->
+        <div style="background:var(--sf2);border-radius:10px;padding:12px;margin-bottom:10px;">
+          <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--or);letter-spacing:2px;margin-bottom:6px;">3 — SCREENSHOTS xG EXTERIEUR</div>
+          <div style="font-size:11px;color:var(--mt);margin-bottom:8px;">Les equipes adversaires (plusieurs a la fois OK)</div>
+          <input type="file" accept="image/*" multiple id="dayAwayInput" style="position:fixed;top:-999px;opacity:0;width:1px;height:1px;">
+          <button type="button" onclick="document.getElementById('dayAwayInput').click()"
+            style="width:100%;padding:9px;background:var(--sf);border:1px dashed rgba(249,115,22,.3);border-radius:9px;color:var(--or);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+            📸 Screenshots equipes EXT
+          </button>
+          <div id="dayAwayStatus" style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:5px;"></div>
+        </div>
+
+        <button onclick="analyzeDaySelected()" id="btnDay"
+          style="width:100%;padding:12px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:11px;color:#fff;font-family:DM Sans,sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" disabled>
+          ANALYSER LES MATCHS
+        </button>
+      </div>
+
+      <div class="iload" id="dayLoader"><div class="ispin"></div><div class="ilbl" id="dayLbl">ANALYSE...</div></div>
+      <div class="err" id="errDay2"></div>
+    </div>
+    <div id="dayResults2"></div>
+  </div>
+
+  <!-- MATCH PANEL (shown by default) -->
+  <div id="matchPanel">
+
   <!-- BUTEURS -->
   <div style="background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:13px 15px;margin-bottom:13px;">
     <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--gd);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Buteurs</div>
@@ -339,6 +411,7 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
   <button class="bana" id="bana" onclick="doAnalyze()" disabled>ANALYSER LE MATCH</button>
   <div class="pgw" id="pgw"><div class="pgt"><div class="pgf" id="pgf"></div></div><div class="pgl" id="pgl">...</div></div>
   <div class="err" id="errmatch"></div>
+  </div><!-- end matchPanel -->
   <div class="rep" id="rep">
     <div class="mhdr fin" id="mhdr"></div>
     <div class="tcols fin" id="tcols"></div>
@@ -349,6 +422,11 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
     <div class="aib fin" id="aibox" style="display:none">
       <div class="aih"><div class="aid"></div><div class="ait">Analyse Tipster IA</div></div>
       <div id="aitx"></div>
+    </div>
+    <div style="margin-top:12px;margin-bottom:4px;">
+      <button onclick="addCurrentToTracker()" style="width:100%;padding:12px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.4);border-radius:12px;color:#c4b5fd;font-family:DM Mono,monospace;font-size:12px;cursor:pointer;letter-spacing:2px;text-transform:uppercase;-webkit-tap-highlight-color:transparent;">
+        🎯 Ajouter ce pari au Tracker
+      </button>
     </div>
     <div class="disc">Outil d'information uniquement - Pas un conseil en pari</div>
   </div>
@@ -512,17 +590,25 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
   </div>
 </div>
 
-<!-- ═══ TAB 6 — TRACKER ═══ -->
-<div class="panel" id="p6">
-  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:16px;margin-bottom:14px;">
-    <div class="sec" style="margin-bottom:12px;">Tracker de Resultats</div>
-    <p style="font-size:13px;color:var(--mt);margin-bottom:14px;line-height:1.7;">Entre le vrai resultat pour mesurer la precision de l app.</p>
-    <div id="trackerList"><div class="info">Aucune analyse a tracker. Lance une analyse d abord.</div></div>
+<!-- ═══ TAB 4 — TRACKER ═══ -->
+<div class="panel" id="p4">
+  <!-- STATS GLOBALES -->
+  <div id="trackerStats" style="display:none;margin-bottom:14px;">
+    <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="sec" style="margin-bottom:0;">Precision globale</div>
+        <button onclick="clearTracker()" style="padding:5px 12px;background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.25);border-radius:8px;color:var(--rd);font-family:DM Mono,monospace;font-size:10px;cursor:pointer;">Tout effacer</button>
+      </div>
+      <div id="trackerStatsContent"></div>
+    </div>
   </div>
-  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:16px;margin-bottom:14px;" id="trackerStats" style="display:none;">
-    <div class="sec" style="margin-bottom:12px;">Statistiques de Precision</div>
-    <div id="trackerStatsContent"></div>
+  <!-- RECHERCHE -->
+  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:10px 14px;margin-bottom:12px;">
+    <input id="trackerSearch" type="text" placeholder="Rechercher un match ou equipe..." oninput="renderTracker()"
+      style="width:100%;background:transparent;border:none;outline:none;color:var(--tx);font-family:DM Sans,sans-serif;font-size:13px;">
   </div>
+  <!-- LISTE -->
+  <div id="trackerList"><div class="info">Aucun pari tracker. Lance une analyse et clique "Ajouter au Tracker".</div></div>
 </div>
 
 </div><!-- /wrap -->
@@ -626,7 +712,7 @@ function resetAll(){
 // ═══════════════════════════════════
 //  TABS
 // ═══════════════════════════════════
-[0,1,2,3,4,5,6].forEach(function(i){
+[0,1,2,3,4].forEach(function(i){
   var btn=document.getElementById('tb'+i);
   if(!btn)return;
   btn.addEventListener('click',function(){showTab(i);});
@@ -2085,6 +2171,191 @@ function restoreAbsents(){
 }
 
 // ================================================================
+// ANALYSE MODE (1 match vs journee)
+// ================================================================
+function setAnalyseMode(mode, btn){
+  var isJournee = mode === 'journee';
+  document.getElementById('journeePanel').style.display = isJournee ? 'block' : 'none';
+  document.getElementById('matchPanel').style.display = isJournee ? 'none' : 'block';
+  document.getElementById('amMatch').style.background = isJournee ? 'var(--sf2)' : 'linear-gradient(135deg,var(--ac2),#5b21b6)';
+  document.getElementById('amMatch').style.color = isJournee ? 'var(--mt)' : '#fff';
+  document.getElementById('amMatch').style.border = isJournee ? '1px solid var(--bd)' : 'none';
+  document.getElementById('amJournee').style.background = isJournee ? 'linear-gradient(135deg,var(--ac2),#5b21b6)' : 'var(--sf2)';
+  document.getElementById('amJournee').style.color = isJournee ? '#fff' : 'var(--mt)';
+  document.getElementById('amJournee').style.border = isJournee ? 'none' : '1px solid var(--bd)';
+}
+
+// ================================================================
+// JOURNEE 3 ETAPES
+// ================================================================
+var _dayMatches_list=[];  // [{ht,at,time,selected}]
+var _dayHomeData=[];      // screenshots DOM analyses
+var _dayAwayData=[];      // screenshots EXT analyses
+
+document.addEventListener('DOMContentLoaded', function(){
+  var calInput=document.getElementById('dayCalendarInput');
+  if(calInput) calInput.addEventListener('change',function(){
+    if(this.files&&this.files.length) loadCalendarScreenshot(this.files[0]);
+  });
+  var hInput=document.getElementById('dayHomeInput');
+  if(hInput) hInput.addEventListener('change',function(){
+    if(this.files&&this.files.length) loadDayTeams(Array.from(this.files),'home');
+  });
+  var aInput=document.getElementById('dayAwayInput');
+  if(aInput) aInput.addEventListener('change',function(){
+    if(this.files&&this.files.length) loadDayTeams(Array.from(this.files),'away');
+  });
+});
+
+async function loadCalendarScreenshot(file){
+  var status=document.getElementById('dayCalStatus');
+  var loader=document.getElementById('dayLoader');
+  var btn=document.getElementById('dayCalBtn');
+  loader.style.display='block';
+  btn.style.opacity='0.6';
+  status.textContent='Detection des matchs...';
+  status.style.color='var(--ac)';
+  try {
+    var b64=await toB64(file);
+    var resp=await fetch('/api/analyze',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image:b64,mediaType:file.type||'image/png',hint:'calendar'})
+    });
+    var data=await resp.json();
+    if(data.error) throw new Error(data.error);
+    var fixtures=data.fixtures||data.matches||[];
+    if(!fixtures.length) throw new Error('Aucun match detecte. Essaie un screenshot plus clair.');
+    _dayMatches_list=fixtures.map(function(m){return {ht:m.home||m.ht||'DOM',at:m.away||m.at||'EXT',time:m.time||'',selected:true,homeData:null,awayData:null};});
+    status.textContent=fixtures.length+' matchs detectes !';
+    status.style.color='var(--gr)';
+    btn.style.border='1px solid rgba(34,211,165,.4)';
+    btn.style.color='var(--gr)';
+    btn.textContent='✓ '+fixtures.length+' matchs detectes';
+    renderDayMatchCheckboxes();
+    document.getElementById('dayMatchList').style.display='block';
+  } catch(e){
+    status.textContent='Erreur: '+e.message;
+    status.style.color='var(--rd)';
+  }
+  loader.style.display='none';
+  btn.style.opacity='1';
+}
+
+function renderDayMatchCheckboxes(){
+  var html='';
+  _dayMatches_list.forEach(function(m,i){
+    var hOk=!!m.homeData, aOk=!!m.awayData;
+    var border=hOk&&aOk?'1px solid rgba(34,211,165,.3)':hOk||aOk?'1px solid rgba(245,158,11,.3)':'1px solid var(--bd)';
+    html+='<div style="display:flex;align-items:center;gap:10px;background:var(--sf2);border-radius:10px;padding:10px 13px;margin-bottom:6px;border:'+border+';">';
+    html+='<input type="checkbox" id="daycb'+i+'" '+(m.selected?'checked':'')+' onchange="_dayMatches_list['+i+'].selected=this.checked;updateDayBtn()" style="width:16px;height:16px;cursor:pointer;accent-color:var(--ac2);">';
+    html+='<div style="flex:1;">';
+    html+='<div style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;">';
+    html+='<span style="color:'+(hOk?'var(--bl)':'var(--mt)')+';">'+m.ht+'</span>';
+    html+=' <span style="color:var(--mt);font-size:.7em;">vs</span> ';
+    html+='<span style="color:'+(aOk?'var(--or)':'var(--mt)')+';">'+m.at+'</span>';
+    if(m.time) html+=' <span style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;">'+m.time+'</span>';
+    html+='</div>';
+    html+='<div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:2px;">';
+    html+=(hOk?'<span style="color:var(--gr);">xG DOM ✓</span>':'<span>xG DOM ?</span>');
+    html+=' | ';
+    html+=(aOk?'<span style="color:var(--gr);">xG EXT ✓</span>':'<span>xG EXT ?</span>');
+    html+='</div></div></div>';
+  });
+  document.getElementById('dayMatchCheckboxes').innerHTML=html;
+  updateDayBtn();
+}
+
+function updateDayBtn(){
+  var selected=_dayMatches_list.filter(function(m){return m.selected;}).length;
+  var hasTeams=(_dayHomeData.length>0)||(_dayAwayData.length>0);
+  var btn=document.getElementById('btnDay');
+  if(btn){
+    btn.disabled=!(selected>0&&hasTeams);
+    btn.style.opacity=btn.disabled?'0.4':'1';
+  }
+}
+
+async function loadDayTeamFiles(files, side){
+  var statusId = side==='home' ? 'dayHomeStatus' : 'dayAwayStatus';
+  var btnId = side==='home' ? 'dayHomeSsBtn' : 'dayAwaySsBtn';
+  var status=document.getElementById(statusId);
+  if(status){ status.textContent='Analyse '+files.length+' screenshot(s)...'; status.style.color='var(--ac)'; }
+  var results=[];
+  for(var i=0;i<files.length;i++){
+    var b64=await toB64(files[i]);
+    var r=await callAPI(b64,files[i].type||'image/png','understat');
+    if(r&&(r.team_name||r.team_xG_total)){
+      r._name=r.team_name||('Equipe '+(i+1));
+      results.push(r);
+    }
+  }
+  if(side==='home') _dayHomeData=results;
+  else _dayAwayData=results;
+  var names=results.map(function(r){return r._name;}).join(', ');
+  if(status){ status.textContent=results.length+' equipe(s): '+names; status.style.color='var(--gr)'; }
+  var btn=document.getElementById(btnId);
+  if(btn&&results.length){ btn.style.borderColor='rgba(34,211,165,.4)'; btn.style.color='var(--gr)'; }
+  updateDayBtn();
+}
+
+
+
+async function analyzeDaySelected(){
+  var selected=_dayMatches_list.filter(function(m){return m.selected;});
+  if(!selected.length) return;
+  document.getElementById('dayLoader').style.display='block';
+  document.getElementById('dayResults2').innerHTML='';
+  var matches=[];
+  for(var i=0;i<selected.length;i++){
+    document.getElementById('dayLbl').textContent='Match '+(i+1)+'/'+selected.length+': '+selected[i].ht+' vs '+selected[i].at;
+    var m=selected[i];
+    var hData=findTeamData(m.ht,'home')||m.homeData||null;
+    var aData=findTeamData(m.at,'away')||m.awayData||null;
+    var d=buildMatchData(hData,aData,m.ht,m.at,{});
+    matches.push(d);
+  }
+  document.getElementById('dayLoader').style.display='none';
+  window._dayMatches=matches;
+  renderDayResults(matches);
+}
+
+// Override renderDayResults to use dayResults2
+var _origRenderDay = null;
+function renderDayResults(matches){
+  var el = document.getElementById('dayResults2') || document.getElementById('dayResults');
+  var html='<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:2px;margin-bottom:12px;">'+matches.length+' MATCHS - CLIQUER POUR DETAIL</div>';
+  matches.forEach(function(d,i){
+    var b=d.bets||{};
+    var slvl=b.signalLevel||0;
+    var scol=slvl>=3?'var(--gr)':slvl>=2?'var(--gd)':slvl>=1?'var(--ac)':'var(--mt)';
+    html+='<div style="background:var(--sf);border:1px solid var(--bd);border-radius:13px;padding:14px;margin-bottom:10px;cursor:pointer;" onclick="loadDayMatch('+i+')">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px;">';
+    html+='<span style="font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:2px;"><span style="color:var(--bl);">'+d.ht+'</span> <span style="color:var(--mt);">vs</span> <span style="color:var(--or);">'+d.at+'</span></span>';
+    html+='<span style="font-family:Bebas Neue,sans-serif;font-size:13px;color:'+scol+';">'+(b.signal||'NO BET')+'</span>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:10px;flex-wrap:wrap;">';
+    if(d.hxg) html+='<span style="font-size:11px;color:var(--mt);">xG '+d.hxg.toFixed(2)+' vs '+d.axg.toFixed(2)+'</span>';
+    if(b.best) html+='<span style="font-size:11px;color:var(--gd);">'+b.best.label+' '+b.best.pct+'%</span>';
+    if(b.values&&b.values.length) html+='<span style="font-size:11px;color:var(--gr);">VALUE: '+b.values.map(function(v){return v.label+' +'+v.val.edge+'%';}).join(' | ')+'</span>';
+    html+='</div></div>';
+  });
+  if(el) el.innerHTML=html;
+  window._dayMatches=matches;
+}
+
+function loadDayMatch(idx){
+  if(!window._dayMatches||!window._dayMatches[idx]) return;
+  var d=window._dayMatches[idx];
+  setAnalyseMode('match', document.getElementById('amMatch'));
+  document.getElementById('hn').value=d.ht;
+  document.getElementById('an').value=d.at;
+  window._lastMatchData=d;
+  renderReport(d);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ================================================================
 // RESET PARTIEL
 // ================================================================
 function resetSide(side){
@@ -2108,8 +2379,10 @@ function resetSide(side){
 }
 
 // ================================================================
-// HISTORIQUE (5 dernieres analyses)
+// HISTORIQUE (conserve pour compatibilite)
 // ================================================================
+function saveToHistory(d){ addCurrentAnalysisData(d); }
+function renderHistory(){}
 function saveToHistory(d){
   try {
     var hist=getHistory();
@@ -2150,21 +2423,37 @@ function renderHistory(){
 }
 
 // ================================================================
-// TRACKER DE RESULTATS
+// TRACKER AMELIORE
 // ================================================================
-function getTracker(){ try{return JSON.parse(localStorage.getItem('xgscout_track')||'[]');}catch(e){return[];} }
+var _currentAnalysisData=null;
 
-function addToTracker(e){
-  try {
-    var t=getTracker();
-    if(!t.find(function(x){return x.id===e.id;})){
-      t.unshift(Object.assign({},e,{result:null,correct:null}));
-      t=t.slice(0,20);
-      localStorage.setItem('xgscout_track',JSON.stringify(t));
-    }
-    renderTracker();
-  } catch(ex){}
+function addCurrentAnalysisData(d){ _currentAnalysisData=d; }
+
+function addCurrentToTracker(){
+  if(!_currentAnalysisData){alert('Lance une analyse d abord!');return;}
+  var d=_currentAnalysisData;
+  var b=d.bets||{};
+  var entry={
+    id: Date.now(),
+    date: new Date().toLocaleDateString('fr-FR'),
+    ht: d.ht, at: d.at,
+    hxg: d.hxg, axg: d.axg,
+    bestBet: b.best?b.best.label+' '+b.best.pct+'%':'',
+    bestBetType: b.best?b.best.label:'',
+    signal: b.signal||'',
+    values: b.values?b.values.map(function(v){return v.label+' +'+v.val.edge+'%';}):[],
+    result: null, correct: null
+  };
+  var t=getTracker();
+  t.unshift(entry);
+  localStorage.setItem('xgscout_track',JSON.stringify(t));
+  renderTracker();
+  showTab(4);
+  alert('Pari ajoute au Tracker !');
 }
+
+function getTracker(){ try{return JSON.parse(localStorage.getItem('xgscout_track')||'[]');}catch(e){return[];} }
+function clearTracker(){ if(confirm('Effacer tout le tracker ?')){localStorage.removeItem('xgscout_track'); renderTracker();} }
 
 function submitResult(id){
   var h=parseInt(document.getElementById('res_h_'+id).value);
@@ -2174,17 +2463,18 @@ function submitResult(id){
   t=t.map(function(e){
     if(e.id!==id) return e;
     e.result={h:h,a:a};
-    var bet=(e.bestBet||'').toUpperCase();
+    var bet=(e.bestBetType||e.bestBet||'').toUpperCase();
     var goals=h+a;
-    if(bet.indexOf('OVER 2.5')>=0) e.correct=goals>2;
+    if(bet.indexOf('OVER 4.5')>=0) e.correct=goals>4;
     else if(bet.indexOf('OVER 3.5')>=0) e.correct=goals>3;
+    else if(bet.indexOf('OVER 2.5')>=0) e.correct=goals>2;
     else if(bet.indexOf('BTTS')>=0) e.correct=h>0&&a>0;
-    else if(bet.indexOf('NUL')>=0) e.correct=h===a;
+    else if(bet.indexOf('NUL')>=0||bet.indexOf('DRAW')>=0) e.correct=h===a;
     else if(bet.indexOf('WIN')>=0){
-      var htw=bet.indexOf(e.ht.toUpperCase().split(' ')[0])>=0;
-      e.correct=htw?(h>a):(a>h);
+      var htw=(e.ht||'').toUpperCase().split(' ')[0];
+      if(bet.indexOf(htw)>=0) e.correct=h>a;
+      else e.correct=a>h;
     }
-    else e.correct=false;
     return e;
   });
   localStorage.setItem('xgscout_track',JSON.stringify(t));
@@ -2192,47 +2482,102 @@ function submitResult(id){
 }
 
 function renderTracker(){
-  var t=getTracker();
+  var allT=getTracker();
+  // Apply search filter
+  var searchEl=document.getElementById('trackerSearch');
+  var search=searchEl?searchEl.value.toLowerCase().trim():'';
+  var t=search?allT.filter(function(e){
+    return (e.ht||'').toLowerCase().indexOf(search)>=0||(e.at||'').toLowerCase().indexOf(search)>=0;
+  }):allT;
+
   var el=document.getElementById('trackerList'); if(!el)return;
-  if(!t.length){el.innerHTML='<div class="info">Lance une analyse pour la tracker ici.</div>';return;}
-  var total=0,ok=0;
+  if(!t.length){
+    el.innerHTML='<div class="info">'+(search?'Aucun resultat pour "'+search+'"':'Ajoute une analyse au tracker pour commencer.')+'</div>';
+    if(!search) document.getElementById('trackerStats').style.display='none';
+    return;
+  }
+
+  // Stats by bet type
+  var byType={};
+  allT.forEach(function(e){
+    if(e.correct===null) return;
+    var type=(e.bestBetType||'autre').split(' ')[0].toUpperCase();
+    if(!byType[type]) byType[type]={ok:0,total:0};
+    byType[type].total++;
+    if(e.correct) byType[type].ok++;
+  });
+
+  // Global stats
+  var total=allT.filter(function(e){return e.correct!==null;}).length;
+  var ok=allT.filter(function(e){return e.correct===true;}).length;
+
+  // Render stats
+  if(total>0){
+    var pct=Math.round(ok/total*100);
+    var col2=pct>=60?'var(--gr)':pct>=40?'var(--gd)':'var(--rd)';
+    var sc=document.getElementById('trackerStatsContent');
+    if(sc){
+      var statsHtml='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">'
+        +'<div style="background:var(--sf2);border-radius:10px;padding:12px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:30px;color:'+col2+';">'+pct+'%</div><div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;">Precision</div></div>'
+        +'<div style="background:var(--sf2);border-radius:10px;padding:12px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:30px;color:var(--gr);">'+ok+'/'+total+'</div><div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;">Corrects</div></div>'
+        +'<div style="background:var(--sf2);border-radius:10px;padding:12px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:30px;color:var(--ac);">'+(allT.length-total)+'</div><div style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;">En attente</div></div>'
+        +'</div>';
+      // Stats by bet type
+      var typeKeys=Object.keys(byType).filter(function(k){return byType[k].total>=2;});
+      if(typeKeys.length){
+        statsHtml+='<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:2px;margin-bottom:8px;">PAR TYPE DE PARI</div>';
+        statsHtml+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+        typeKeys.forEach(function(k){
+          var d=byType[k];
+          var p=Math.round(d.ok/d.total*100);
+          var c=p>=60?'var(--gr)':p>=40?'var(--gd)':'var(--rd)';
+          statsHtml+='<div style="background:var(--sf2);border-radius:8px;padding:8px 12px;text-align:center;">'
+            +'<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);margin-bottom:2px;">'+k+'</div>'
+            +'<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:'+c+';">'+p+'%</div>'
+            +'<div style="font-size:10px;color:var(--mt);">'+d.ok+'/'+d.total+'</div>'
+            +'</div>';
+        });
+        statsHtml+='</div>';
+      }
+      sc.innerHTML=statsHtml;
+    }
+    document.getElementById('trackerStats').style.display='block';
+  }
+
+  // Render list
   var html='';
   t.forEach(function(e){
-    if(e.correct!==null){total++;if(e.correct)ok++;}
-    var bet=(e.bestBet||'-').replace(/[0-9]+%/,'').trim();
-    html+='<div style="background:var(--sf2);border-radius:12px;padding:13px;margin-bottom:10px;">';
-    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-    html+='<span style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;color:var(--tx);">'+e.ht+' vs '+e.at+'</span>';
+    var bet=(e.bestBet||'-');
+    var isCorrect=e.correct===true;
+    var isWrong=e.correct===false;
+    var borderCol=isCorrect?'rgba(34,211,165,.3)':isWrong?'rgba(255,77,109,.3)':'var(--bd)';
+    html+='<div style="background:var(--sf2);border:1px solid '+borderCol+';border-radius:12px;padding:13px;margin-bottom:10px;">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">';
+    html+='<span style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;">'
+      +'<span style="color:var(--bl);">'+e.ht+'</span>'
+      +' <span style="color:var(--mt);font-size:.7em;">vs</span> '
+      +'<span style="color:var(--or);">'+e.at+'</span></span>';
     html+='<span style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;">'+e.date+'</span>';
     html+='</div>';
-    html+='<div style="font-size:11px;color:var(--mt);margin-bottom:8px;">Pari: <span style="color:var(--ac);">'+bet+'</span></div>';
+    if(e.signal) html+='<div style="font-size:10px;color:var(--ac);font-family:DM Mono,monospace;margin-bottom:5px;">'+e.signal+'</div>';
+    html+='<div style="font-size:12px;color:var(--mt);margin-bottom:8px;">Pari: <span style="color:var(--gd);font-weight:600;">'+bet+'</span></div>';
+    if(e.values&&e.values.length) html+='<div style="font-size:11px;color:var(--gr);margin-bottom:8px;">VALUE: '+e.values.join(' | ')+'</div>';
     if(e.result===null){
-      html+='<div style="display:grid;grid-template-columns:1fr 1fr 80px;gap:6px;">';
+      html+='<div style="display:grid;grid-template-columns:1fr 1fr 70px;gap:6px;">';
       html+='<input type="number" min="0" max="20" placeholder="'+e.ht+'" id="res_h_'+e.id+'" style="background:var(--sf);border:1px solid var(--bd);border-radius:7px;padding:7px;color:var(--bl);font-family:DM Mono,monospace;font-size:13px;outline:none;text-align:center;">';
       html+='<input type="number" min="0" max="20" placeholder="'+e.at+'" id="res_a_'+e.id+'" style="background:var(--sf);border:1px solid var(--bd);border-radius:7px;padding:7px;color:var(--or);font-family:DM Mono,monospace;font-size:13px;outline:none;text-align:center;">';
       html+='<button onclick="submitResult('+e.id+')" style="padding:7px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:7px;color:#fff;font-family:DM Mono,monospace;font-size:11px;cursor:pointer;">OK</button>';
       html+='</div>';
     } else {
-      var col=e.correct?'var(--gr)':'var(--rd)';
-      html+='<div style="display:flex;align-items:center;gap:10px;">';
-      html+='<span style="font-family:Bebas Neue,sans-serif;font-size:22px;color:var(--ac);">'+e.result.h+' - '+e.result.a+'</span>';
-      html+='<span style="font-family:Bebas Neue,sans-serif;font-size:16px;color:'+col+';">'+(e.correct?'✓ CORRECT':'✗ INCORRECT')+'</span>';
+      var rc=isCorrect?'var(--gr)':'var(--rd)';
+      html+='<div style="display:flex;align-items:center;gap:12px;">';
+      html+='<span style="font-family:Bebas Neue,sans-serif;font-size:24px;color:var(--ac);">'+e.result.h+' - '+e.result.a+'</span>';
+      html+='<span style="font-family:Bebas Neue,sans-serif;font-size:16px;color:'+rc+';">'+(isCorrect?'✓ CORRECT':'✗ INCORRECT')+'</span>';
       html+='</div>';
     }
     html+='</div>';
   });
   el.innerHTML=html;
-  if(total>0){
-    var pct=Math.round(ok/total*100);
-    var col2=pct>=60?'var(--gr)':pct>=40?'var(--gd)':'var(--rd)';
-    var sc=document.getElementById('trackerStatsContent');
-    if(sc) sc.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'
-      +'<div style="background:var(--sf2);border-radius:10px;padding:14px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:32px;color:'+col2+';">'+pct+'%</div><div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;">Precision</div></div>'
-      +'<div style="background:var(--sf2);border-radius:10px;padding:14px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:32px;color:var(--gr);">'+ok+'</div><div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;">Corrects</div></div>'
-      +'<div style="background:var(--sf2);border-radius:10px;padding:14px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:32px;color:var(--mt);">'+total+'</div><div style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;">Total</div></div>'
-      +'</div>';
-    var ts=document.getElementById('trackerStats'); if(ts)ts.style.display='block';
-  }
 }
 
 // ================================================================
