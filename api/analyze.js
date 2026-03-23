@@ -49,6 +49,18 @@ REPONDS EN JSON VALIDE uniquement :
   "players": [{"name": "Nom Joueur", "number": 0, "position": "GK|DEF|MID|ATT", "starting": true}]
 }`,
 
+      calendar: `Analyse ce screenshot de programme/calendrier de matchs de football.
+Extrais TOUS les matchs visibles avec les equipes domicile et exterieur.
+REPONDS EN JSON VALIDE uniquement :
+{
+  "type": "calendar",
+  "competition": "nom championnat ou null",
+  "date": "date ou null",
+  "fixtures": [
+    {"home": "Equipe DOM", "away": "Equipe EXT", "time": "20:00"}
+  ]
+}`,
+
       h2h: `Analyse ce screenshot de confrontations directes H2H. Extrais tous les matchs visibles.
 REPONDS EN JSON VALIDE uniquement :
 {
