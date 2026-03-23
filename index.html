@@ -572,7 +572,7 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
       <button type="button" onclick="document.getElementById('dayAwayInput').click()" style="width:100%;padding:10px;background:var(--sf);border:1px dashed rgba(249,115,22,.3);border-radius:10px;color:var(--or);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;margin-bottom:8px;">📸 Screenshots equipes EXT</button>
       <div id="dayAwayStatus" style="font-size:11px;color:var(--mt);font-family:DM Mono,monospace;"></div>
     </div>
-    <button onclick="analyzeDayMatches()" id="btnDay" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:13px;color:#fff;font-family:DM Sans,sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" disabled>ANALYSER LA JOURNEE</button>
+    <!-- btnDay moved to journeePanel -->
     <div class="iload" id="dayLoader"><div class="ispin"></div><div class="ilbl" id="dayLbl">ANALYSE...</div></div>
     <div class="err" id="errDay"></div>
   </div>
@@ -2268,10 +2268,10 @@ function renderDayMatchCheckboxes(){
 
 function updateDayBtn(){
   var selected=_dayMatches_list.filter(function(m){return m.selected;}).length;
-  var hasTeams=(_dayHomeData.length>0)||(_dayAwayData.length>0);
+  // Enable if matches selected - teams optional (will use name only if no data)
   var btn=document.getElementById('btnDay');
   if(btn){
-    btn.disabled=!(selected>0&&hasTeams);
+    btn.disabled=selected===0;
     btn.style.opacity=btn.disabled?'0.4':'1';
   }
 }
@@ -2316,6 +2316,7 @@ async function analyzeDaySelected(){
     matches.push(d);
   }
   document.getElementById('dayLoader').style.display='none';
+  document.getElementById('btnDay').disabled=false;
   window._dayMatches=matches;
   renderDayResults(matches);
 }
