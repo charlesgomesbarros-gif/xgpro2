@@ -1207,7 +1207,8 @@ async function doAnalyze(){
     // Call tipster API here, then render
     setProg(95,'Analyse tipster IA...');
     try {
-      var tresp=await fetch('/api/tipster',{
+      var tipsterTimeout=new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},8000);});
+      var tipsterFetch=fetch('/api/tipster',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({matchData:{
@@ -1218,13 +1219,14 @@ async function doAnalyze(){
           adjXgH:d.adjXgH,adjXgA:d.adjXgA,
           hstand:d.hstand,astand:d.astand,
           bets:d.bets,
-          absHome:document.getElementById('absHome')?document.getElementById('absHome').value:'',
-          absAway:document.getElementById('absAway')?document.getElementById('absAway').value:''
+          absHome:document.getElementById('absentHome')?document.getElementById('absentHome').value:'',
+          absAway:document.getElementById('absentAway')?document.getElementById('absentAway').value:''
         }})
-      });
-      var tdata=await tresp.json();
+      }).then(function(r){return r.json();});
+      var tdata=await Promise.race([tipsterFetch,tipsterTimeout]);
       if(tdata.analysis) d._tipsterAnalysis=tdata.analysis;
-    } catch(e2){ d._tipsterAnalysis=''; }
+      else d._tipsterAnalysis=buildLocalTipster(d);
+    } catch(e2){ d._tipsterAnalysis=buildLocalTipster(d); }
     setProg(100,'Termine !');
     await new Promise(function(r){setTimeout(r,150);});
     document.getElementById('pgw').style.display='none';
@@ -1241,6 +1243,36 @@ async function doAnalyze(){
 }
 
 function setProg(pct,lbl){document.getElementById('pgf').style.width=pct+'%';document.getElementById('pgl').textContent=lbl;}
+
+function buildLocalTipster(d){
+  var b=d.bets||{};
+  var hxg=(d.adjXgH||d.hxg||0).toFixed(2);
+  var axg=(d.adjXgA||d.axg||0).toFixed(2);
+  var hWin=b.hw?b.hw.pct:0, aWin=b.aw?b.aw.pct:0, draw=b.draw?b.draw.pct:0;
+  var over=b.over?b.over.pct:0, btts=b.btts?b.btts.pct:0;
+  var values=b.values&&b.values.length?b.values.map(function(v){return v.label+' (edge +'+v.val.edge+'%)';}).join(', '):'aucune';
+  var best=b.best?b.best.label+' ('+b.best.pct+'%)':'NO BET';
+  var signal=b.signal||'NO BET';
+  var conf=b.signalLevel||0;
+  var confTxt=conf>=3?'Fort (8/10)':conf>=2?'Bon (6/10)':conf>=1?'Moyen (4/10)':'Faible (2/10)';
+
+  var txt='Analyse : ';
+  txt+=d.ht+' (xG/match '+hxg+') vs '+d.at+' (xG/match '+axg+'). ';
+  if(hWin>aWin+10) txt+=d.ht+' favori statistique ('+hWin+'% vs '+aWin+'%). ';
+  else if(aWin>hWin+10) txt+=d.at+' favori statistique ('+aWin+'% vs '+hWin+'%). ';
+  else txt+='Match équilibré ('+d.ht+' '+hWin+'% / Nul '+draw+'% / '+d.at+' '+aWin+'%). ';
+  if(over>=55) txt+='Fort potentiel offensif (Over 2.5: '+over+'%). ';
+  if(btts>=55) txt+='Les deux équipes susceptibles de marquer (BTTS: '+btts+'%). ';
+  if(d.hr>115) txt+=d.ht+' surperforme ses xG ('+Math.round(d.hr)+'%), régression possible. ';
+  if(d.ar<85) txt+=d.at+' sous-performe ses xG ('+Math.round(d.ar||0)+'%), peut se réveiller. ';
+  txt+='
+Value Bet : '+(values!=='aucune'?values:best)+'. ';
+  txt+='
+Confiance : '+confTxt+'.';
+  if(signal==='NO BET') txt+='
+À éviter : signal insuffisant selon les xG.';
+  return txt;
+}
 
 function reanalyzeWithXga(){
   if(!window._lastMatchData) return;
@@ -1261,6 +1293,8 @@ function reanalyzeWithXga(){
   var newD=buildMatchData(hRaw,aRaw,d.ht,d.at,d.odds||{});
   window._lastMatchData=newD;
   window._lastHomeRaw=hRaw; window._lastAwayRaw=aRaw;
+  // Relancer analyse tipster
+  newD._tipsterAnalysis=buildLocalTipster(newD);
   renderReport(newD);
 }
 
@@ -1350,7 +1384,7 @@ function buildMatchData(hm,am,hn,an,odds,absentHome,absentAway){
         if(!xg90 && p.xG && p.apps) xg90 = parseFloat(p.xG) / parseFloat(p.apps);
         // Convert xG90 to % probability of scoring in ONE match
         // xG90=0.42 means 42% chance per 90min match
-        var pct2 = Math.min(Math.round(xg90 * 100), 75);
+        var pct2 = xg90 > 0 ? Math.min(Math.round((1 - Math.exp(-xg90)) * 100), 52) : 0;
         if(pt.includes(htf2))d.lgScorers.push(Object.assign({},p,{_sd:'h',score_probability:pct2}));
         if(pt.includes(atf2))d.lgScorers.push(Object.assign({},p,{_sd:'a',score_probability:pct2}));
       });
@@ -1360,7 +1394,9 @@ function buildMatchData(hm,am,hn,an,odds,absentHome,absentAway){
   function calcScorePct(s){
     var xg90 = s.xG90 ? parseFloat(s.xG90) : 0;
     if(!xg90 && s.xG && s.apps) xg90 = parseFloat(s.xG) / parseFloat(s.apps);
-    return Math.min(Math.round(xg90 * 100), 75);
+    if(!xg90 && s.xG && s.matches_played) xg90 = parseFloat(s.xG) / parseFloat(s.matches_played);
+    // Formule correcte : P(marquer) = 1 - e^(-xG90), plafond 52%
+    return xg90 > 0 ? Math.min(Math.round((1 - Math.exp(-xg90)) * 100), 52) : 0;
   }
   function scorerEdge(pct, cote){
     if(!cote||!pct) return null;
