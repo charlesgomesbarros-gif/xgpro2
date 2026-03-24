@@ -4,26 +4,34 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>xG Scout Pro</title>
+<style>
+body { font-family: Arial; background:#0f172a; color:white; padding:20px; }
+h1 { text-align:center; }
+.section { margin:20px 0; }
+button { padding:10px 20px; background:#22c55e; border:none; color:white; cursor:pointer; }
+</style>
 </head>
 <body>
 
 <h1>xG Scout Pro</h1>
 
-<h3>Equipe domicile</h3>
-<input type="file" id="homeInput" multiple accept="image/*">
+<div class="section">
+  <h3>Equipe domicile</h3>
+  <input type="file" id="hi" multiple accept="image/*">
+</div>
 
-<h3>Equipe extérieur</h3>
-<input type="file" id="awayInput" multiple accept="image/*">
+<div class="section">
+  <h3>Equipe extérieur</h3>
+  <input type="file" id="ai" multiple accept="image/*">
+</div>
 
-<br><br>
-<button onclick="analyzeMatch()">Analyser le match</button>
+<div class="section">
+  <button onclick="analyzeMatch()">Analyser</button>
+</div>
 
 <pre id="result"></pre>
 
 <script>
-const homeInput = document.getElementById('homeInput');
-const awayInput = document.getElementById('awayInput');
-
 async function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -34,8 +42,8 @@ async function fileToBase64(file) {
 }
 
 async function analyzeMatch() {
-  const homeFiles = homeInput.files;
-  const awayFiles = awayInput.files;
+  const homeFiles = document.getElementById('hi').files;
+  const awayFiles = document.getElementById('ai').files;
 
   if (!homeFiles.length || !awayFiles.length) {
     alert('Ajoute des images domicile et extérieur');
@@ -47,7 +55,6 @@ async function analyzeMatch() {
   try {
     const results = [];
 
-    // Analyse domicile
     for (let file of homeFiles) {
       const base64 = await fileToBase64(file);
 
@@ -65,7 +72,6 @@ async function analyzeMatch() {
       results.push({ team: 'home', file: file.name, data });
     }
 
-    // Analyse extérieur
     for (let file of awayFiles) {
       const base64 = await fileToBase64(file);
 
