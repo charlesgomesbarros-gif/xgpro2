@@ -3,71 +3,102 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Football Analyzer</title>
+<title>xG Scout Pro</title>
 
 <style>
 body{
   margin:0;
-  font-family:Arial;
-  background:#0a0a0f;
+  font-family:Inter, sans-serif;
+  background: radial-gradient(circle at top, #0f172a, #020617);
   color:white;
 }
+
 .container{
-  max-width:1000px;
+  max-width:1100px;
   margin:auto;
-  padding:20px;
+  padding:30px 20px;
 }
+
 .title{
-  font-size:32px;
-  font-weight:bold;
-}
-.card{
-  background:#12121a;
-  border:1px solid #1e1e2e;
-  border-radius:15px;
-  padding:20px;
-  margin-top:20px;
-}
-.upload{
-  border:2px dashed #2a2a3a;
-  border-radius:10px;
-  padding:20px;
   text-align:center;
-  cursor:pointer;
+  font-size:48px;
+  font-weight:800;
+  background:linear-gradient(90deg,#facc15,#f97316);
+  -webkit-background-clip:text;
+  color:transparent;
 }
+
+.subtitle{
+  text-align:center;
+  color:#94a3b8;
+  margin-bottom:30px;
+}
+
+.cards{
+  display:flex;
+  gap:20px;
+}
+
+.card{
+  flex:1;
+  background:#0f172a;
+  border:1px solid #1e293b;
+  border-radius:20px;
+  padding:20px;
+}
+
+.upload-box{
+  border:2px dashed #1e293b;
+  border-radius:15px;
+  height:160px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.upload-box:hover{
+  border-color:#7c3aed;
+}
+
 .preview img{
   width:100%;
   margin-top:10px;
   border-radius:10px;
 }
-input{
-  width:100%;
+
+.btn{
+  margin-top:15px;
   padding:10px;
-  margin-top:10px;
-  border-radius:8px;
-  border:1px solid #2a2a3a;
-  background:#1a1a24;
-  color:white;
-}
-button{
-  padding:15px;
   border:none;
   border-radius:10px;
-  margin-top:20px;
-  cursor:pointer;
-  width:100%;
   font-weight:bold;
+  cursor:pointer;
 }
+
+.dom{ background:#3b82f6; color:white;}
+.ext{ background:#f97316; color:white;}
+
 .analyze{
-  background:#7c3aed;
-  color:white;
-}
-.result{
-  background:#1a1a24;
+  margin-top:30px;
+  width:100%;
   padding:15px;
-  border-radius:10px;
-  margin-top:20px;
-  white-space:pre-wrap;
+  border-radius:12px;
+  background:linear-gradient(90deg,#7c3aed,#a855f7);
+  border:none;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.result{
+  margin-top:30px;
+  background:#020617;
+  padding:20px;
+  border-radius:15px;
+  border:1px solid #1e293b;
 }
 </style>
 </head>
@@ -76,31 +107,40 @@ button{
 
 <div class="container">
 
-<div class="title">⚽ Football Analyzer</div>
+<div class="title">XG SCOUT PRO</div>
+<div class="subtitle">Analyse Match • xG • IA</div>
 
-<div class="card">
-<h3>🏠 Domicile</h3>
-<input type="file" id="domInput">
-<div id="domPreview" class="preview"></div>
+<div class="cards">
+
+  <!-- DOM -->
+  <div class="card">
+    <h3>🏠 Equipe domicile</h3>
+
+    <div class="upload-box" onclick="domInput.click()">
+      <p>Ajouter images</p>
+    </div>
+
+    <input type="file" id="domInput" hidden>
+
+    <div id="domPreview" class="preview"></div>
+  </div>
+
+  <!-- EXT -->
+  <div class="card">
+    <h3>✈️ Equipe extérieur</h3>
+
+    <div class="upload-box" onclick="extInput.click()">
+      <p>Ajouter images</p>
+    </div>
+
+    <input type="file" id="extInput" hidden>
+
+    <div id="extPreview" class="preview"></div>
+  </div>
+
 </div>
 
-<div class="card">
-<h3>✈️ Extérieur</h3>
-<input type="file" id="extInput">
-<div id="extPreview" class="preview"></div>
-</div>
-
-<div class="card">
-<h3>Buteurs</h3>
-<input id="buteursDom" placeholder="Buteurs DOM">
-<input id="buteursExt" placeholder="Buteurs EXT">
-
-<h3>Absents</h3>
-<input id="absentsDom" placeholder="Absents DOM">
-<input id="absentsExt" placeholder="Absents EXT">
-</div>
-
-<button class="analyze" onclick="analyze()">ANALYSER</button>
+<button class="analyze" onclick="analyze()">⚡ ANALYSER LE MATCH</button>
 
 <div id="result" class="result"></div>
 
@@ -108,25 +148,21 @@ button{
 
 <script>
 
-// ✅ MET TON BACKEND ICI (déjà intégré)
+// ⚠️ MET TON BACKEND ICI
 const API = "https://football-analyzer-api.vercel.app/api";
 
-let domImage = null;
-let extImage = null;
-let domData = null;
-let extData = null;
+let domFile = null;
+let extFile = null;
 
 // preview
 domInput.onchange = e=>{
-  const file = e.target.files[0];
-  domImage = file;
-  domPreview.innerHTML = `<img src="${URL.createObjectURL(file)}">`;
+  domFile = e.target.files[0];
+  domPreview.innerHTML = `<img src="${URL.createObjectURL(domFile)}">`;
 };
 
 extInput.onchange = e=>{
-  const file = e.target.files[0];
-  extImage = file;
-  extPreview.innerHTML = `<img src="${URL.createObjectURL(file)}">`;
+  extFile = e.target.files[0];
+  extPreview.innerHTML = `<img src="${URL.createObjectURL(extFile)}">`;
 };
 
 // base64
@@ -138,62 +174,52 @@ function toBase64(file){
   });
 }
 
-// analyze image (Claude via backend)
-async function analyzeImage(base64, type){
-  const res = await fetch(API+"/analyze-image",{
-    method:"POST",
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      image_base64: base64,
-      team_type: type
-    })
-  });
-
-  return await res.json();
-}
-
-// main
+// analyze
 async function analyze(){
 
-  const resultBox = document.getElementById("result");
-  resultBox.innerHTML = "Analyse en cours...";
+  result.innerHTML = "⏳ Analyse en cours...";
 
   try{
 
-    // 1. extraction Claude
-    if(domImage){
-      const b64 = await toBase64(domImage);
-      const r = await analyzeImage(b64,"dom");
-      domData = r.data;
+    let domData=null;
+    let extData=null;
+
+    // 1 extraction Claude
+    if(domFile){
+      const b64 = await toBase64(domFile);
+      const r = await fetch(API+"/analyze-image",{
+        method:"POST",
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({image_base64:b64,team_type:"dom"})
+      });
+      domData = (await r.json()).data;
     }
 
-    if(extImage){
-      const b64 = await toBase64(extImage);
-      const r = await analyzeImage(b64,"ext");
-      extData = r.data;
+    if(extFile){
+      const b64 = await toBase64(extFile);
+      const r = await fetch(API+"/analyze-image",{
+        method:"POST",
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({image_base64:b64,team_type:"ext"})
+      });
+      extData = (await r.json()).data;
     }
 
-    // 2. create match
+    // 2 create match
     const matchRes = await fetch(API+"/matches",{
       method:"POST",
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        mode:"1_match",
-        buteurs_dom: buteursDom.value,
-        buteurs_ext: buteursExt.value,
-        absents_dom: absentsDom.value,
-        absents_ext: absentsExt.value
-      })
+      body:JSON.stringify({mode:"1_match"})
     });
 
     const match = await matchRes.json();
 
-    // 3. update xg
+    // 3 update xg
     if(domData){
       await fetch(API+"/matches/"+match.id,{
         method:"PUT",
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ xg_dom_data: domData })
+        body:JSON.stringify({xg_dom_data:domData})
       });
     }
 
@@ -201,24 +227,24 @@ async function analyze(){
       await fetch(API+"/matches/"+match.id,{
         method:"PUT",
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ xg_ext_data: extData })
+        body:JSON.stringify({xg_ext_data:extData})
       });
     }
 
-    // 4. analyse IA (Claude aussi)
+    // 4 analyse IA
     const analysisRes = await fetch(API+"/analyze-match/"+match.id,{
       method:"POST"
     });
 
     const final = await analysisRes.json();
 
-    resultBox.innerHTML = `
+    result.innerHTML = `
       <h3>📊 Analyse IA</h3>
       <p>${final.analysis || "Aucune analyse"}</p>
     `;
 
   }catch(err){
-    resultBox.innerHTML = "Erreur: "+err.message;
+    result.innerHTML = "❌ Erreur : "+err.message;
   }
 }
 
