@@ -7,100 +7,125 @@
 
 <style>
 body {
+  margin:0;
   font-family: Arial;
-  background: #0f172a;
-  color: white;
-  padding: 20px;
+  background: radial-gradient(circle, #0f172a, #020617);
+  color:white;
 }
 
-h1 {
-  text-align: center;
+.container {
+  max-width:1100px;
+  margin:auto;
+  padding:40px 20px;
+  text-align:center;
 }
 
-.section {
-  margin: 20px 0;
+.title {
+  font-size:48px;
+  font-weight:bold;
 }
 
-.dropzone {
-  border: 2px dashed #334155;
-  padding: 20px;
-  text-align: center;
-  border-radius: 10px;
-  cursor: pointer;
+.cards {
+  display:flex;
+  gap:20px;
+  margin-top:40px;
+}
+
+.card {
+  flex:1;
+  background:#0f172a;
+  padding:20px;
+  border-radius:15px;
+  border:1px solid #1e293b;
 }
 
 .preview {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 10px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:10px;
 }
 
 .preview img {
-  width: 100px;
-  border-radius: 8px;
+  width:90px;
+  border-radius:8px;
 }
 
 button {
-  padding: 12px 20px;
-  background: #22c55e;
-  border: none;
-  color: white;
-  cursor: pointer;
-  border-radius: 8px;
+  margin-top:10px;
+  padding:10px 15px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.homeBtn { background:#3b82f6; color:white; }
+.awayBtn { background:#f97316; color:white; }
+
+.analyzeBtn {
+  margin-top:30px;
+  background:linear-gradient(90deg, purple, violet);
+  color:white;
+  padding:15px 30px;
+  font-size:18px;
 }
 
 #result {
-  margin-top: 20px;
-  white-space: pre-wrap;
+  margin-top:20px;
+  white-space:pre-wrap;
+  text-align:left;
 }
 </style>
 </head>
 
 <body>
 
-<h1>xG Scout Pro</h1>
+<div class="container">
 
-<div class="section">
-  <h3>Equipe domicile</h3>
-  <input type="file" id="homeInput" multiple accept="image/*">
-  <div id="homePreview" class="preview"></div>
+<div class="title">xG SCOUT</div>
+
+<div class="cards">
+
+  <div class="card">
+    <h3>Equipe domicile</h3>
+    <input type="file" id="homeInput" multiple hidden>
+    <button class="homeBtn" onclick="homeInput.click()">Ajouter images</button>
+    <div id="homePreview" class="preview"></div>
+  </div>
+
+  <div class="card">
+    <h3>Equipe extérieur</h3>
+    <input type="file" id="awayInput" multiple hidden>
+    <button class="awayBtn" onclick="awayInput.click()">Ajouter images</button>
+    <div id="awayPreview" class="preview"></div>
+  </div>
+
 </div>
 
-<div class="section">
-  <h3>Equipe extérieur</h3>
-  <input type="file" id="awayInput" multiple accept="image/*">
-  <div id="awayPreview" class="preview"></div>
-</div>
-
-<button onclick="analyze()">Analyser</button>
+<button class="analyzeBtn" onclick="analyze()">Analyser le match</button>
 
 <div id="result"></div>
 
+</div>
+
 <script>
-// preview images
-function showPreview(input, containerId) {
+
+function showPreview(input, containerId){
   const container = document.getElementById(containerId);
   container.innerHTML = "";
 
-  [...input.files].forEach(file => {
+  [...input.files].forEach(file=>{
     const img = document.createElement("img");
     img.src = URL.createObjectURL(file);
     container.appendChild(img);
   });
 }
 
-document.getElementById("homeInput").addEventListener("change", function(){
-  showPreview(this, "homePreview");
-});
+homeInput.onchange = () => showPreview(homeInput, "homePreview");
+awayInput.onchange = () => showPreview(awayInput, "awayPreview");
 
-document.getElementById("awayInput").addEventListener("change", function(){
-  showPreview(this, "awayPreview");
-});
-
-// convert base64
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result.split(',')[1]);
     reader.onerror = reject;
@@ -108,66 +133,42 @@ function fileToBase64(file) {
   });
 }
 
-// call API
-async function callAPI(base64, type) {
+async function callAPI(base64, type){
   const res = await fetch('/api/analyze', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
       image: base64,
       mediaType: type,
-      hint: 'understat'
+      hint:'understat'
     })
   });
 
   const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error(data.error || "Erreur API");
-  }
+  if(!res.ok) throw new Error(data.error || 'Erreur API');
 
   return data;
 }
 
-// main analyze
-async function analyze() {
-  const homeFiles = document.getElementById("homeInput").files;
-  const awayFiles = document.getElementById("awayInput").files;
+async function analyze(){
+  const homeFiles = homeInput.files;
+  const awayFiles = awayInput.files;
 
-  if (!homeFiles.length || !awayFiles.length) {
-    alert("Ajoute images domicile + extérieur");
+  if(!homeFiles.length || !awayFiles.length){
+    alert("Ajoute les images");
     return;
   }
 
-  document.getElementById("result").textContent = "Analyse en cours...";
+  result.textContent = "Analyse en cours...";
 
-  try {
+  try{
     const results = [];
 
-    // domicile
-    for (let file of homeFiles) {
+    for(let file of homeFiles){
       const b64 = await fileToBase64(file);
-      const res = await callAPI(b64, file.type);
-      results.push({ team: "home", file: file.name, res });
+      const r = await callAPI(b64, file.type);
+      results.push({team:"home", data:r});
     }
 
-    // extérieur
-    for (let file of awayFiles) {
-      const b64 = await fileToBase64(file);
-      const res = await callAPI(b64, file.type);
-      results.push({ team: "away", file: file.name, res });
-    }
-
-    document.getElementById("result").textContent =
-      JSON.stringify(results, null, 2);
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById("result").textContent =
-      "Erreur: " + err.message;
-  }
-}
-</script>
-
-</body>
-</html>
+    for(let file of awayFile
