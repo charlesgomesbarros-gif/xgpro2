@@ -1,1215 +1,229 @@
-
-Action: file_editor create /app/frontend/public/xgscout.html --file-text "<!DOCTYPE html>
-<html lang=\"fr\">
+<!DOCTYPE html>
+<html lang="fr">
 <head>
-<meta charset=\"UTF-8\">
-<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-<title>xG Scout Pro</title>
-<link href=\"https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;700&display=swap\" rel=\"stylesheet\">
-<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">
-<style>
-:root{
-  --bg:#0a0d14;
-  --sf:#0f1520;
-  --sf2:#161d2e;
-  --bd:rgba(255,255,255,0.08);
-  --ac:#00e5ff;
-  --ac2:#7c3aed;
-  --gd:#f59e0b;
-  --gr:#22d3a5;
-  --rd:#ff4d6d;
-  --bl:#3b82f6;
-  --or:#f97316;
-  --tx:#e8edf5;
-  --mt:#6b7a9a;
-  --glow:0 0 20px rgba(0,229,255,0.15);
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{
-  background:var(--bg);
-  color:var(--tx);
-  font-family:'DM Sans',sans-serif;
-  min-height:100vh;
-  overflow-x:hidden;
-}
-body::before{
-  content:'';
-  position:fixed;
-  inset:0;
-  background-image:
-    radial-gradient(ellipse at 20% 30%, rgba(124,58,237,0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 70%, rgba(0,229,255,0.06) 0%, transparent 50%),
-    linear-gradient(rgba(0,229,255,.015) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,229,255,.015) 1px,transparent 1px);
-  background-size:100% 100%, 100% 100%, 60px 60px, 60px 60px;
-  pointer-events:none;
-  z-index:0;
-}
-.wrap{max-width:1000px;margin:0 auto;padding:0 18px;position:relative;z-index:1;}
+  <meta charset="UTF-8">
+  <title>XG Scout</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-/* HEADER AMÉLIORÉ */
-.hdr{padding:28px 0 22px;text-align:center;position:relative;}
-.badge{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  background:linear-gradient(135deg, rgba(0,229,255,.1), rgba(124,58,237,.1));
-  border:1px solid rgba(0,229,255,.2);
-  border-radius:100px;
-  padding:6px 18px;
-  font-family:DM Mono,monospace;
-  font-size:11px;
-  color:var(--ac);
-  letter-spacing:2px;
-  margin-bottom:12px;
-  box-shadow:var(--glow);
-  backdrop-filter:blur(10px);
-}
-.bdot{width:7px;height:7px;background:var(--ac);border-radius:50%;animation:pulse 2s infinite;box-shadow:0 0 10px var(--ac);}
-h1{
-  font-family:Bebas Neue,sans-serif;
-  font-size:clamp(44px,8vw,82px);
-  letter-spacing:6px;
-  line-height:.88;
-  background:linear-gradient(135deg,#fff 15%,var(--gd) 55%,var(--ac) 100%);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  background-clip:text;
-  text-shadow:0 0 60px rgba(245,158,11,0.2);
-}
-.tagline{margin-top:8px;color:var(--mt);font-size:13px;letter-spacing:1px;}
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
 
-/* MAIN TABS AMÉLIORÉS */
-.tabs{
-  display:flex;
-  background:linear-gradient(180deg, var(--sf) 0%, rgba(15,21,32,0.95) 100%);
-  border:1px solid var(--bd);
-  border-radius:18px;
-  padding:5px;
-  margin-bottom:18px;
-  overflow-x:auto;
-  gap:3px;
-  scrollbar-width:none;
-  box-shadow:0 4px 20px rgba(0,0,0,0.3);
-}
-.tabs::-webkit-scrollbar{display:none;}
-.tab{
-  flex:1;
-  min-width:75px;
-  padding:11px 8px;
-  border-radius:13px;
-  border:none;
-  cursor:pointer;
-  font-family:DM Mono,monospace;
-  font-size:10px;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  transition:all .25s cubic-bezier(0.4, 0, 0.2, 1);
-  background:transparent;
-  color:var(--mt);
-  white-space:nowrap;
-  text-align:center;
-  -webkit-tap-highlight-color:transparent;
-  position:relative;
-  overflow:hidden;
-}
-.tab:hover{
-  color:var(--tx);
-  background:rgba(255,255,255,0.03);
-}
-.tab.on{
-  background:linear-gradient(135deg,var(--ac2),#5b21b6);
-  color:#fff;
-  box-shadow:0 4px 18px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,0.1);
-  font-weight:500;
-}
-.tab.on::before{
-  content:'';
-  position:absolute;
-  inset:0;
-  background:linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 50%);
-  border-radius:13px;
-}
-.panel{display:none;animation:fadeIn .3s ease;}.panel.on{display:block;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    h1 {
+      margin-bottom: 20px;
+    }
 
-/* MEMORY BAR AMÉLIORÉ */
-.mem{
-  background:linear-gradient(180deg, var(--sf) 0%, rgba(15,21,32,0.9) 100%);
-  border:1px solid var(--bd);
-  border-radius:14px;
-  padding:12px 16px;
-  margin-bottom:16px;
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  align-items:center;
-  backdrop-filter:blur(10px);
-}
-.mt-lbl{font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:1px;}
-.mc{
-  padding:4px 10px;
-  border-radius:100px;
-  font-family:DM Mono,monospace;
-  font-size:10px;
-  letter-spacing:1px;
-  transition:all .3s ease;
-}
-.mc.empty{background:rgba(255,255,255,.03);border:1px solid var(--bd);color:var(--mt);}
-.mc.full{
-  border:1px solid rgba(34,211,165,.4);
-  background:linear-gradient(135deg, rgba(34,211,165,.15), rgba(34,211,165,.08));
-  color:var(--gr);
-  box-shadow:0 0 15px rgba(34,211,165,.15);
-}
-.mrst{
-  margin-left:auto;
-  padding:5px 13px;
-  background:rgba(255,77,109,.1);
-  border:1px solid rgba(255,77,109,.3);
-  border-radius:8px;
-  color:var(--rd);
-  font-family:DM Mono,monospace;
-  font-size:10px;
-  cursor:pointer;
-  transition:all .2s;
-}
-.mrst:hover{background:rgba(255,77,109,.18);transform:scale(1.02);}
+    .container {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
 
-/* UPLOAD AREA AMÉLIORÉ */
-.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
-@media(max-width:580px){.tgrid{grid-template-columns:1fr;}}
-.tbox{
-  background:linear-gradient(180deg, var(--sf) 0%, rgba(15,21,32,0.95) 100%);
-  border-radius:18px;
-  overflow:hidden;
-  border:1px solid var(--bd);
-  transition:all .3s ease;
-  box-shadow:0 4px 20px rgba(0,0,0,0.2);
-}
-.tbox:hover{border-color:rgba(255,255,255,0.12);box-shadow:0 6px 30px rgba(0,0,0,0.3);}
-.tbhdr{
-  padding:12px 15px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  border-bottom:1px solid var(--bd);
-  background:rgba(0,0,0,0.2);
-}
-.tni{
-  flex:1;
-  background:transparent;
-  border:none;
-  outline:none;
-  font-family:'DM Sans',sans-serif;
-  font-size:14px;
-  font-weight:500;
-}
-.tni::placeholder{color:var(--mt);}
-.tni.h{color:var(--bl);}.tni.a{color:var(--or);}
-.darea{
-  margin:12px;
-  border:2px dashed rgba(255,255,255,.08);
-  border-radius:14px;
-  padding:20px 15px;
-  text-align:center;
-  cursor:pointer;
-  transition:all .25s cubic-bezier(0.4, 0, 0.2, 1);
-  position:relative;
-  overflow:hidden;
-}
-.darea::before{
-  content:'';
-  position:absolute;
-  inset:0;
-  background:radial-gradient(circle at center, transparent 0%, transparent 100%);
-  transition:all .3s;
-}
-.darea.dh:hover,.darea.dh.drag{
-  border-color:var(--bl);
-  background:rgba(59,130,246,.08);
-  box-shadow:inset 0 0 30px rgba(59,130,246,.1);
-}
-.darea.da:hover,.darea.da.drag{
-  border-color:var(--or);
-  background:rgba(249,115,22,.08);
-  box-shadow:inset 0 0 30px rgba(249,115,22,.1);
-}
-.di{font-size:28px;margin-bottom:8px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));}
-.dt{font-size:12px;color:var(--mt);margin-bottom:10px;line-height:1.5;}
-.bpk{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:10px 20px;
-  border-radius:100px;
-  font-weight:600;
-  font-size:12px;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  cursor:pointer;
-  border:none;
-  transition:all .25s cubic-bezier(0.4, 0, 0.2, 1);
-  position:relative;
-  overflow:hidden;
-}
-.bpk::before{
-  content:'';
-  position:absolute;
-  inset:0;
-  background:linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%);
-}
-.bpk:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.3);}
-.bpk.h{background:linear-gradient(135deg,var(--bl),#1d4ed8);color:#fff;}
-.bpk.a{background:linear-gradient(135deg,var(--or),#c2410c);color:#fff;}
+    .box {
+      border: 2px dashed #334155;
+      padding: 20px;
+      width: 40%;
+      min-height: 150px;
+      border-radius: 10px;
+    }
 
-/* THUMBNAILS AMÉLIORÉS */
-.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:6px;padding:0 12px 12px;}
-.thumb{
-  position:relative;
-  border-radius:10px;
-  overflow:hidden;
-  aspect-ratio:1;
-  border:2px solid var(--bd);
-  transition:all .2s;
-}
-.thumb:hover{border-color:rgba(255,255,255,0.2);transform:scale(1.05);}
-.thumb img{width:100%;height:100%;object-fit:cover;}
-.thrm{
-  position:absolute;
-  top:3px;
-  right:3px;
-  width:18px;
-  height:18px;
-  border-radius:50%;
-  background:rgba(0,0,0,.85);
-  color:#fff;
-  font-size:10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border:none;
-  cursor:pointer;
-  opacity:0;
-  transition:all .2s;
-}
-.thumb:hover .thrm{opacity:1;}
-.thst{
-  position:absolute;
-  bottom:3px;
-  right:3px;
-  width:16px;
-  height:16px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:9px;
-  font-weight:700;
-  box-shadow:0 2px 6px rgba(0,0,0,0.3);
-}
-.std{background:var(--gr);color:#000;}.ste{background:var(--rd);color:#fff;}.stl{background:var(--ac);color:#000;animation:pulse 1s infinite;}
+    button {
+      padding: 12px 20px;
+      background: #22c55e;
+      border: none;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
 
-/* BUTTONS AMÉLIORÉS */
-.bana{
-  width:100%;
-  padding:15px;
-  background:linear-gradient(135deg,var(--ac2),#5b21b6);
-  border:none;
-  border-radius:14px;
-  color:#fff;
-  font-family:'DM Sans',sans-serif;
-  font-weight:700;
-  font-size:14px;
-  letter-spacing:2px;
-  text-transform:uppercase;
-  cursor:pointer;
-  transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-bottom:14px;
-  position:relative;
-  overflow:hidden;
-  box-shadow:0 4px 20px rgba(124,58,237,.3);
-}
-.bana::before{
-  content:'';
-  position:absolute;
-  inset:0;
-  background:linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%);
-}
-.bana:hover:not(:disabled){
-  transform:translateY(-2px);
-  box-shadow:0 8px 30px rgba(124,58,237,.4);
-}
-.bana:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+    button:hover {
+      background: #16a34a;
+    }
 
-/* RESET BUTTONS */
-.btn-reset{
-  width:calc(100% - 24px);
-  margin:0 12px 10px;
-  padding:8px;
-  background:rgba(255,77,109,.08);
-  border:1px solid rgba(255,77,109,.25);
-  border-radius:10px;
-  color:var(--rd);
-  font-family:DM Mono,monospace;
-  font-size:11px;
-  cursor:pointer;
-  transition:all .2s;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-}
-.btn-reset:hover{background:rgba(255,77,109,.15);transform:scale(1.01);}
+    .file {
+      margin: 5px 0;
+      font-size: 14px;
+    }
 
-/* PROGRESS */
-.pgw{
-  display:none;
-  background:linear-gradient(180deg, var(--sf) 0%, rgba(15,21,32,0.95) 100%);
-  border:1px solid var(--bd);
-  border-radius:14px;
-  padding:14px 18px;
-  margin-bottom:14px;
-}
-.pgt{height:5px;background:rgba(255,255,255,.05);border-radius:3px;margin-bottom:8px;overflow:hidden;}
-.pgf{
-  height:100%;
-  background:linear-gradient(90deg,var(--ac2),var(--ac));
-  border-radius:3px;
-  transition:width .4s ease;
-  width:0%;
-  box-shadow:0 0 10px var(--ac);
-}
-.pgl{font-family:DM Mono,monospace;font-size:11px;color:var(--mt);text-align:center;}
-
-/* SECTIONS */
-.sec{
-  font-family:Bebas Neue,sans-serif;
-  font-size:18px;
-  letter-spacing:2px;
-  color:var(--ac2);
-  margin-bottom:12px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-.sec::after{
-  content:'';
-  flex:1;
-  height:1px;
-  background:linear-gradient(90deg, var(--ac2), transparent);
-  opacity:0.3;
-}
-
-/* CARDS */
-.card{
-  background:linear-gradient(180deg, var(--sf) 0%, rgba(15,21,32,0.95) 100%);
-  border:1px solid var(--bd);
-  border-radius:16px;
-  padding:16px;
-  margin-bottom:14px;
-  box-shadow:0 4px 20px rgba(0,0,0,0.2);
-  transition:all .2s;
-}
-.card:hover{border-color:rgba(255,255,255,0.1);}
-
-/* INPUT FIELDS */
-.input-field{
-  width:100%;
-  background:var(--sf2);
-  border:1px solid var(--bd);
-  border-radius:10px;
-  padding:10px 14px;
-  color:var(--tx);
-  font-family:'DM Sans',sans-serif;
-  font-size:13px;
-  outline:none;
-  transition:all .2s;
-}
-.input-field:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(0,229,255,0.1);}
-.input-field::placeholder{color:var(--mt);}
-
-/* ERROR/INFO */
-.err{
-  background:rgba(255,77,109,.1);
-  border:1px solid rgba(255,77,109,.3);
-  border-radius:12px;
-  padding:14px 18px;
-  color:var(--rd);
-  font-size:13px;
-  line-height:1.7;
-  margin-bottom:14px;
-  display:none;
-}
-.info{
-  background:linear-gradient(135deg, rgba(0,229,255,.08), rgba(124,58,237,.05));
-  border:1px solid rgba(0,229,255,.2);
-  border-radius:12px;
-  padding:14px 18px;
-  font-size:13px;
-  color:var(--ac);
-  line-height:1.7;
-  margin-bottom:14px;
-}
-
-/* LOADER */
-.iload{text-align:center;padding:40px;display:none;}
-.ispin{
-  width:38px;
-  height:38px;
-  border:3px solid rgba(0,229,255,.15);
-  border-top-color:var(--ac);
-  border-radius:50%;
-  animation:spin 1s linear infinite;
-  margin:0 auto 12px;
-  box-shadow:0 0 15px rgba(0,229,255,0.2);
-}
-.ilbl{font-family:DM Mono,monospace;color:var(--ac);font-size:11px;letter-spacing:2px;animation:blink 1.5s infinite;}
-
-/* CTX UPLOAD */
-.ctup{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:18px;margin-bottom:16px;}
-.cugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;margin-top:14px;}
-.cubtn{
-  background:var(--sf2);
-  border:2px dashed rgba(255,255,255,.08);
-  border-radius:14px;
-  padding:16px;
-  text-align:center;
-  cursor:pointer;
-  transition:all .25s;
-  position:relative;
-}
-.cubtn:hover{border-color:var(--ac2);background:rgba(124,58,237,.08);transform:translateY(-2px);}
-.cubtn.ld{border-style:solid;border-color:rgba(34,211,165,.4);background:rgba(34,211,165,.05);}
-.cubi{font-size:26px;margin-bottom:6px;}
-.cubl{font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
-.cubs{font-size:11px;color:var(--mt);}.cubtn.ld .cubs{color:var(--gr);}
-.cuck{
-  position:absolute;
-  top:8px;
-  right:8px;
-  width:18px;
-  height:18px;
-  background:var(--gr);
-  border-radius:50%;
-  color:#000;
-  font-size:10px;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  font-weight:700;
-  box-shadow:0 2px 8px rgba(34,211,165,0.4);
-}
-.cubtn.ld .cuck{display:flex;}
-
-/* LEAGUE SELECTOR */
-.league-sel-box{background:var(--sf2);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px;}
-.league-sel-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-.league-flag{
-  padding:8px 14px;
-  background:var(--sf);
-  border:1px solid var(--bd);
-  border-radius:10px;
-  font-family:DM Mono,monospace;
-  font-size:11px;
-  color:var(--mt);
-  cursor:pointer;
-  transition:all .2s;
-}
-.league-flag:hover{border-color:rgba(255,255,255,0.2);color:var(--tx);}
-.league-flag.sel{
-  border-color:var(--ac2);
-  color:#c4b5fd;
-  background:rgba(124,58,237,.15);
-  box-shadow:0 0 15px rgba(124,58,237,0.2);
-}
-
-/* LEAGUE TABS */
-.league-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center;}
-.league-tab{
-  padding:9px 16px;
-  background:var(--sf);
-  border:1px solid var(--bd);
-  border-radius:12px;
-  color:var(--mt);
-  font-family:DM Mono,monospace;
-  font-size:11px;
-  cursor:pointer;
-  transition:all .2s;
-  letter-spacing:1px;
-}
-.league-tab:hover{border-color:rgba(255,255,255,0.15);}
-.league-tab.on{border-color:var(--ac);color:var(--ac);background:rgba(0,229,255,.1);}
-.league-tab .lgt-del{margin-left:8px;color:var(--rd);font-size:12px;opacity:.6;}
-.league-tab .lgt-del:hover{opacity:1;}
-.btn-add-league{
-  padding:9px 16px;
-  background:rgba(0,229,255,.08);
-  border:1px dashed rgba(0,229,255,.3);
-  border-radius:12px;
-  color:var(--ac);
-  font-family:DM Mono,monospace;
-  font-size:11px;
-  cursor:pointer;
-  transition:all .2s;
-}
-.btn-add-league:hover{background:rgba(0,229,255,.15);}
-
-/* STANDINGS TABLE */
-.stbox{
-  background:var(--sf);
-  border:1px solid var(--bd);
-  border-radius:16px;
-  overflow:hidden;
-  margin-bottom:18px;
-  box-shadow:0 4px 20px rgba(0,0,0,0.2);
-}
-.st-league-hdr{
-  padding:14px 16px;
-  background:linear-gradient(180deg, var(--sf2) 0%, rgba(22,29,46,0.9) 100%);
-  border-bottom:1px solid var(--bd);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-}
-.st-league-name{font-family:Bebas Neue,sans-serif;font-size:20px;letter-spacing:2px;color:var(--ac);}
-.st-league-info{font-family:DM Mono,monospace;font-size:11px;color:var(--mt);}
-.sthdr{
-  display:grid;
-  grid-template-columns:30px 1fr 28px 28px 28px 28px 40px 50px;
-  gap:4px;
-  padding:10px 14px;
-  background:rgba(0,0,0,.25);
-  font-family:DM Mono,monospace;
-  font-size:10px;
-  color:var(--mt);
-  letter-spacing:1px;
-  text-transform:uppercase;
-}
-.strow{
-  display:grid;
-  grid-template-columns:30px 1fr 28px 28px 28px 28px 40px 50px;
-  gap:4px;
-  padding:11px 14px;
-  border-bottom:1px solid var(--bd);
-  align-items:center;
-  transition:all .15s;
-}
-.strow:last-child{border-bottom:none;}
-.strow:hover{background:rgba(255,255,255,.03);}
-.stpos{font-family:DM Mono,monospace;font-size:12px;font-weight:500;text-align:center;}
-.stnm{font-size:12px;font-weight:500;}
-.stnum{font-family:DM Mono,monospace;font-size:12px;text-align:center;color:var(--mt);}
-.stpts{font-family:Bebas Neue,sans-serif;font-size:18px;text-align:center;}
-.stfm{display:flex;gap:3px;justify-content:center;}
-.fw,.fd,.fl2{
-  width:14px;
-  height:14px;
-  border-radius:4px;
-  font-size:9px;
-  font-weight:700;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.fw{background:rgba(34,211,165,.2);color:var(--gr);}
-.fd{background:rgba(245,158,11,.15);color:var(--gd);}
-.fl2{background:rgba(255,77,109,.15);color:var(--rd);}
-@media(max-width:500px){
-  .sthdr,.strow{grid-template-columns:24px 1fr 24px 38px 44px;}
-  .hm{display:none;}
-}
-
-/* REPORT */
-.rep{display:none;}
-.mhdr{
-  background:linear-gradient(180deg, var(--sf) 0%, rgba(15,21,32,0.95) 100%);
-  border:1px solid var(--bd);
-  border-radius:18px;
-  padding:20px;
-  text-align:center;
-  margin-bottom:14px;
-  box-shadow:0 4px 20px rgba(0,0,0,0.2);
-}
-.mvs{
-  font-family:Bebas Neue,sans-serif;
-  font-size:clamp(20px,5vw,34px);
-  letter-spacing:3px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:14px;
-  flex-wrap:wrap;
-}
-.hn{color:var(--bl);text-shadow:0 0 20px rgba(59,130,246,0.3);}
-.an{color:var(--or);text-shadow:0 0 20px rgba(249,115,22,0.3);}
-.sn{color:var(--ac);font-size:1.3em;text-shadow:0 0 15px rgba(0,229,255,0.3);}
-.vs{color:var(--mt);font-size:.55em;}
-.mmeta{margin-top:8px;font-size:11px;color:var(--mt);font-family:DM Mono,monospace;}
-
-/* TEAM CARDS */
-.tcols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
-@media(max-width:500px){.tcols{grid-template-columns:1fr;}}
-.tc{
-  border-radius:16px;
-  padding:16px;
-  border:1px solid var(--bd);
-  position:relative;
-  overflow:hidden;
-  background:var(--sf);
-}
-.tc::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;}
-.tchome::before{background:linear-gradient(90deg,var(--bl),transparent);}.tcaway::before{background:linear-gradient(90deg,var(--or),transparent);}
-.tchome{background:linear-gradient(180deg, rgba(59,130,246,.06) 0%, var(--sf) 100%);}
-.tcaway{background:linear-gradient(180deg, rgba(249,115,22,.06) 0%, var(--sf) 100%);}
-.ctnm{font-family:Bebas Neue,sans-serif;font-size:17px;letter-spacing:2px;margin-bottom:12px;}
-.tchome .ctnm{color:var(--bl);}.tcaway .ctnm{color:var(--or);}
-.sr{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bd);}
-.sr:last-child{border-bottom:none;}
-.sk{font-family:DM Mono,monospace;font-size:10px;color:var(--mt);letter-spacing:1px;}
-.sv{font-family:DM Mono,monospace;font-size:14px;font-weight:500;}
-.dv{height:1px;background:var(--bd);margin:10px 0;}
-.rp{font-size:28px;font-family:Bebas Neue,sans-serif;letter-spacing:2px;margin-bottom:4px;}
-.oc{color:var(--rd);}.nc{color:var(--gd);}.uc{color:var(--gr);}
-.bbg{height:5px;background:rgba(255,255,255,.05);border-radius:3px;margin-bottom:6px;overflow:hidden;}
-.bf{height:100%;border-radius:3px;max-width:100%;transition:width 1s ease;}
-.bfo{background:linear-gradient(90deg,var(--rd),#ff6b8a);}.bfn{background:linear-gradient(90deg,var(--gd),#fbbf24);}.bfu{background:linear-gradient(90deg,var(--gr),#34d399);}
-.sbdg{display:inline-block;padding:4px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;}
-.sbdg.oc{background:rgba(255,77,109,.15);border:1px solid rgba(255,77,109,.35);}
-.sbdg.nc{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);}
-.sbdg.uc{background:rgba(34,211,165,.15);border:1px solid rgba(34,211,165,.35);}
-
-/* SCORERS */
-.scbox{
-  background:var(--sf);
-  border:1px solid var(--bd);
-  border-radius:16px;
-  padding:16px;
-  margin-bottom:14px;
-}
-.sci{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd);}
-.sci:last-child{border-bottom:none;}
-.scr{font-family:Bebas Neue,sans-serif;font-size:20px;min-width:24px;text-align:center;}
-.r1{color:var(--gd);text-shadow:0 0 10px rgba(245,158,11,0.3);}.r2{color:#94a3b8;}.r3{color:#cd7c2f;}.rx{color:var(--mt);}
-.scnm{font-weight:500;font-size:13px;}
-.scsb{font-size:11px;color:var(--mt);font-family:DM Mono,monospace;}
-.scp{text-align:right;min-width:50px;}
-.scpv{font-family:Bebas Neue,sans-serif;font-size:22px;}
-.spb{width:50px;height:4px;background:rgba(255,255,255,.05);border-radius:2px;margin-top:3px;overflow:hidden;}
-.spf{height:100%;border-radius:2px;}
-.hc{color:var(--gr);}.mc2{color:var(--gd);}.lc{color:var(--mt);}
-.fh{background:var(--gr);}.fm{background:var(--gd);}.fl{background:var(--mt);}
-.tbdg{font-size:10px;padding:2px 8px;border-radius:100px;font-family:DM Mono,monospace;}
-.hbdg{background:rgba(59,130,246,.18);color:#93c5fd;}.abdg{background:rgba(249,115,22,.18);color:#fdba74;}
-
-/* BETS */
-.bbet{
-  background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(0,229,255,.08));
-  border:1px solid rgba(124,58,237,.4);
-  border-radius:16px;
-  padding:16px 20px;
-  display:flex;
-  align-items:center;
-  gap:14px;
-  margin-bottom:12px;
-  flex-wrap:wrap;
-  box-shadow:0 4px 20px rgba(124,58,237,0.1);
-}
-.bbi{font-size:28px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));}
-.bblb{font-family:DM Mono,monospace;font-size:9px;color:var(--mt);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
-.bbn{font-family:Bebas Neue,sans-serif;font-size:24px;letter-spacing:2px;color:#c4b5fd;}
-.bbr{font-size:11px;color:var(--mt);margin-top:3px;}
-.bbc{margin-left:auto;font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;}
-.brow{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:10px;margin-bottom:14px;}
-.bch{
-  background:var(--sf2);
-  border:1px solid var(--bd);
-  border-radius:14px;
-  padding:14px;
-  text-align:center;
-  transition:all .2s;
-}
-.bch:hover{border-color:rgba(255,255,255,0.15);transform:translateY(-2px);}
-.bch.hot{background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.4);}
-.bci{font-size:20px;margin-bottom:5px;}.bcn{font-family:DM Mono,monospace;font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
-.bch.hot .bcn{color:#c4b5fd;}
-.bcb{height:3px;border-radius:2px;max-width:45px;margin:5px auto 4px;}.bct{font-size:10px;color:var(--mt);}.bcr{font-size:9px;color:var(--mt);margin-top:4px;line-height:1.4;}
-.haute{background:var(--gr);}.moyenne{background:var(--gd);}.faible{background:var(--mt);}
-
-/* AI BOX */
-.aib{
-  background:linear-gradient(180deg, var(--sf) 0%, rgba(15,21,32,0.95) 100%);
-  border:1px solid var(--bd);
-  border-radius:16px;
-  padding:18px;
-  margin-bottom:14px;
-}
-.aih{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
-.aid{width:8px;height:8px;background:var(--ac);border-radius:50%;animation:pulse 2s infinite;box-shadow:0 0 10px var(--ac);}
-.ait{font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:2px;color:var(--ac);}
-.aix{font-size:13px;line-height:1.9;color:var(--tx);opacity:.88;white-space:pre-wrap;}
-
-/* DISCLAIMER */
-.disc{text-align:center;padding:14px 0 40px;font-size:10px;color:var(--mt);opacity:.5;font-family:DM Mono,monospace;}
-
-/* ANIMATIONS */
-@keyframes spin{to{transform:rotate(360deg);}}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(.85);}}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
-@keyframes fin{from{opacity:0;transform:translateY(15px);}to{opacity:1;transform:translateY(0);}}
-.fin{animation:fin .4s ease forwards;}
-
-/* MODAL */
-.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px);}
-.modal-box{background:var(--sf);border:1px solid var(--bd);border-radius:20px;padding:24px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,0.5);}
-.modal-ttl{font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:2px;color:var(--ac);margin-bottom:16px;}
-.modal-input{
-  width:100%;
-  background:var(--sf2);
-  border:1px solid var(--bd);
-  border-radius:12px;
-  padding:12px 16px;
-  color:var(--tx);
-  font-family:'DM Sans',sans-serif;
-  font-size:14px;
-  outline:none;
-  margin-bottom:14px;
-}
-.modal-input:focus{border-color:var(--ac);}
-.modal-btns{display:flex;gap:12px;}
-.btn-ok{flex:1;padding:12px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:12px;color:#fff;font-weight:700;font-size:14px;cursor:pointer;}
-.btn-cancel{flex:1;padding:12px;background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:12px;color:var(--mt);font-size:14px;cursor:pointer;}
-
-/* SUB TABS ANALYSE */
-.sub-tabs{display:flex;gap:10px;margin-bottom:14px;}
-.sub-tab{
-  flex:1;
-  padding:11px;
-  border-radius:12px;
-  font-family:DM Mono,monospace;
-  font-size:11px;
-  cursor:pointer;
-  letter-spacing:1px;
-  transition:all .25s;
-  border:1px solid var(--bd);
-  background:var(--sf2);
-  color:var(--mt);
-  text-align:center;
-}
-.sub-tab:hover{border-color:rgba(255,255,255,0.15);}
-.sub-tab.on{
-  background:linear-gradient(135deg,var(--ac2),#5b21b6);
-  border:none;
-  color:#fff;
-  box-shadow:0 4px 15px rgba(124,58,237,0.3);
-}
-
-/* TRACKER STATS */
-.tracker-stats{
-  background:var(--sf2);
-  border-radius:14px;
-  padding:16px;
-  margin-bottom:16px;
-}
-
-/* SCROLLBAR */
-::-webkit-scrollbar{width:6px;height:6px;}
-::-webkit-scrollbar-track{background:var(--bg);}
-::-webkit-scrollbar-thumb{background:var(--sf2);border-radius:3px;}
-::-webkit-scrollbar-thumb:hover{background:var(--mt);}
-</style>
+    #result {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      text-align: left;
+      background: #020617;
+      padding: 15px;
+      border-radius: 10px;
+    }
+  </style>
 </head>
+
 <body>
-<div class=\"wrap\">
 
-<div class=\"hdr\">
-  <div class=\"badge\"><div class=\"bdot\"></div> xG SCOUT PRO</div>
-  <h1>xG SCOUT PRO</h1>
-  <p class=\"tagline\">Analyse Match · Classements · Buteurs · Multi-championnat</p>
-</div>
+<h1>⚽ XG Scout</h1>
 
-<!-- MEM BAR -->
-<div class=\"mem\" id=\"memBar\">
-  <span class=\"mt-lbl\">Memoire :</span>
-  <span class=\"mc empty\" id=\"memHX\">xG DOM</span>
-  <span class=\"mc empty\" id=\"memAX\">xG EXT</span>
-  <span class=\"mc empty\" id=\"memLn\">Compos</span>
-  <span class=\"mc empty\" id=\"memFm\">Forme</span>
-  <span class=\"mc empty\" id=\"memSt\">Classements</span>
-  <span class=\"mc empty\" id=\"memSc\">Buteurs</span>
-  <button class=\"mrst\" id=\"resetAllBtn\"><i class=\"fas fa-sync-alt\"></i> Reset tout</button>
-</div>
-
-<!-- MAIN TABS -->
-<div class=\"tabs\" id=\"mainTabs\">
-  <button class=\"tab on\" data-tab=\"0\"><i class=\"fas fa-chart-line\"></i> Analyse</button>
-  <button class=\"tab\" data-tab=\"1\"><i class=\"fas fa-database\"></i> Donnees</button>
-  <button class=\"tab\" data-tab=\"2\"><i class=\"fas fa-trophy\"></i> Classements</button>
-  <button class=\"tab\" data-tab=\"3\"><i class=\"fas fa-futbol\"></i> Buteurs</button>
-  <button class=\"tab\" data-tab=\"4\"><i class=\"fas fa-crosshairs\"></i> Tracker</button>
-  <button class=\"tab\" data-tab=\"5\"><i class=\"fas fa-calendar-alt\"></i> Journée</button>
-  <button class=\"tab\" data-tab=\"6\"><i class=\"fas fa-history\"></i> Historique</button>
-</div>
-
-<!-- ═══════════ TAB 0 — ANALYSE ═══════════ -->
-<div class=\"panel on\" id=\"p0\">
-  <div class=\"tgrid\">
-    <input type=\"file\" id=\"hi\" accept=\"image/*\" multiple style=\"display:none;\">
-    <input type=\"file\" id=\"ai\" accept=\"image/*\" multiple style=\"display:none;\">
-    <div class=\"tbox\">
-      <div class=\"tbhdr\">
-        <div style=\"width:10px;height:10px;border-radius:50%;background:var(--bl);flex-shrink:0;box-shadow:0 0 8px var(--bl);\"></div>
-        <input class=\"tni h\" id=\"hn\" placeholder=\"Equipe domicile\">
-      </div>
-      <div class=\"darea dh\" id=\"hdrop\">
-        <div class=\"di\"><i class=\"fas fa-home\"></i></div>
-        <div class=\"dt\">Screenshots xG domicile<br>Understat - plusieurs OK</div>
-        <button type=\"button\" class=\"bpk h\" id=\"hpkBtn\"><i class=\"fas fa-folder-open\"></i> Images</button>
-      </div>
-      <div class=\"thumbs\" id=\"hthumbs\"></div>
-      <button class=\"btn-reset\" id=\"resetHomeBtn\"><i class=\"fas fa-trash-alt\"></i> Reset DOM</button>
-    </div>
-    <div class=\"tbox\">
-      <div class=\"tbhdr\">
-        <div style=\"width:10px;height:10px;border-radius:50%;background:var(--or);flex-shrink:0;box-shadow:0 0 8px var(--or);\"></div>
-        <input class=\"tni a\" id=\"an\" placeholder=\"Equipe exterieur\">
-      </div>
-      <div class=\"darea da\" id=\"adrop\">
-        <div class=\"di\"><i class=\"fas fa-plane\"></i></div>
-        <div class=\"dt\">Screenshots xG exterieur<br>Understat - plusieurs OK</div>
-        <button type=\"button\" class=\"bpk a\" id=\"apkBtn\"><i class=\"fas fa-folder-open\"></i> Images</button>
-      </div>
-      <div class=\"thumbs\" id=\"athumbs\"></div>
-      <button class=\"btn-reset\" id=\"resetAwayBtn\"><i class=\"fas fa-trash-alt\"></i> Reset EXT</button>
-    </div>
-  </div>
-  
-  <!-- SOUS-ONGLETS ANALYSE -->
-  <div class=\"sub-tabs\">
-    <button class=\"sub-tab on\" id=\"amMatch\">1 MATCH</button>
-    <button class=\"sub-tab\" id=\"amJournee\"><i class=\"fas fa-calendar-alt\"></i> JOURNEE</button>
+<div class="container">
+  <div class="box">
+    <h3>Home Team</h3>
+    <input type="file" multiple onchange="addFiles(event, 'home')">
+    <div id="homeList"></div>
   </div>
 
-  <!-- JOURNEE PANEL -->
-  <div id=\"journeePanel\" style=\"display:none;\">
-    <div class=\"card\">
-      <!-- ETAPE 1 : Calendrier Understat -->
-      <div style=\"background:var(--sf2);border-radius:12px;padding:14px;margin-bottom:12px;\">
-        <div style=\"font-family:DM Mono,monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:8px;\">1 — CALENDRIER UNDERSTAT</div>
-        <div style=\"font-size:12px;color:var(--mt);margin-bottom:10px;\">Screenshot de la page Understat avec les matchs de la journee.</div>
-        <input type=\"file\" accept=\"image/*\" id=\"dayCalendarInput\" style=\"display:none;\">
-        <button type=\"button\" id=\"dayCalBtn\" class=\"bpk h\" style=\"width:100%;justify-content:center;\">
-          <i class=\"fas fa-calendar-alt\"></i> Screenshot calendrier
-        </button>
-        <div id=\"dayCalStatus\" style=\"font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-top:6px;text-align:center;\"></div>
-      </div>
-
-      <!-- MATCHS DETECTES -->
-      <div id=\"dayMatchList\" style=\"display:none;\">
-        <div style=\"font-family:DM Mono,monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:8px;\">MATCHS DETECTES</div>
-        <div id=\"dayMatchCheckboxes\" style=\"margin-bottom:12px;\"></div>
-
-        <!-- ETAPE 2 : xG DOM -->
-        <div style=\"background:var(--sf2);border-radius:12px;padding:14px;margin-bottom:10px;\">
-          <div style=\"font-family:DM Mono,monospace;font-size:10px;color:var(--bl);letter-spacing:2px;margin-bottom:8px;\">2 — SCREENSHOTS xG DOMICILE</div>
-          <div style=\"font-size:12px;color:var(--mt);margin-bottom:10px;\">Ex: West Ham, Arsenal, Burnley... (plusieurs a la fois OK)</div>
-          <input type=\"file\" accept=\"image/*\" multiple id=\"dayHomeInput2\" style=\"display:none;\">
-          <button type=\"button\" id=\"dayHomeBtn2\" class=\"bpk h\" style=\"width:100%;justify-content:center;\">
-            <i class=\"fas fa-camera\"></i> Screenshots equipes DOM
-          </button>
-          <div id=\"dayHomeStatus2\" style=\"font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-top:6px;text-align:center;\"></div>
-        </div>
-
-        <!-- ETAPE 3 : xG EXT -->
-        <div style=\"background:var(--sf2);border-radius:12px;padding:14px;margin-bottom:12px;\">
-          <div style=\"font-family:DM Mono,monospace;font-size:10px;color:var(--or);letter-spacing:2px;margin-bottom:8px;\">3 — SCREENSHOTS xG EXTERIEUR</div>
-          <div style=\"font-size:12px;color:var(--mt);margin-bottom:10px;\">Les equipes adversaires (plusieurs a la fois OK)</div>
-          <input type=\"file\" accept=\"image/*\" multiple id=\"dayAwayInput2\" style=\"display:none;\">
-          <button type=\"button\" id=\"dayAwayBtn2\" class=\"bpk a\" style=\"width:100%;justify-content:center;\">
-            <i class=\"fas fa-camera\"></i> Screenshots equipes EXT
-          </button>
-          <div id=\"dayAwayStatus2\" style=\"font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-top:6px;text-align:center;\"></div>
-        </div>
-
-        <button id=\"btnDay\" class=\"bana\" disabled>
-          <i class=\"fas fa-chart-bar\"></i> ANALYSER LES MATCHS
-        </button>
-      </div>
-
-      <div class=\"iload\" id=\"dayLoader\"><div class=\"ispin\"></div><div class=\"ilbl\" id=\"dayLbl\">ANALYSE...</div></div>
-      <div class=\"err\" id=\"errDay2\"></div>
-    </div>
-    <div id=\"dayResults2\"></div>
-  </div>
-
-  <!-- MATCH PANEL (shown by default) -->
-  <div id=\"matchPanel\">
-    <!-- BUTEURS -->
-    <div class=\"card\">
-      <div style=\"font-family:DM Mono,monospace;font-size:10px;color:var(--gd);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;\"><i class=\"fas fa-futbol\"></i> Buteurs</div>
-      <div style=\"display:grid;grid-template-columns:1fr 1fr;gap:12px;\">
-        <div>
-          <input type=\"file\" accept=\"image/*\" multiple id=\"scorersHomeInput\" style=\"display:none;\">
-          <button type=\"button\" id=\"scorersHomeBtn\" style=\"width:100%;padding:10px;background:var(--sf2);border:1px dashed rgba(59,130,246,.4);border-radius:12px;color:var(--bl);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;\">
-            <i class=\"fas fa-futbol\"></i> Buteurs DOM
-          </button>
-          <div id=\"scorersHomeStatus\" style=\"font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:5px;text-align:center;\"></div>
-        </div>
-        <div>
-          <input type=\"file\" accept=\"image/*\" multiple id=\"scorersAwayInput\" style=\"display:none;\">
-          <button type=\"button\" id=\"scorersAwayBtn\" style=\"width:100%;padding:10px;background:var(--sf2);border:1px dashed rgba(249,115,22,.4);border-radius:12px;color:var(--or);font-family:DM Mono,monospace;font-size:11px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;\">
-            <i class=\"fas fa-futbol\"></i> Buteurs EXT
-          </button>
-          <div id=\"scorersAwayStatus\" style=\"font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:5px;text-align:center;\"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ABSENTS -->
-    <div class=\"card\">
-      <div style=\"font-family:DM Mono,monospace;font-size:10px;color:var(--rd);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;\"><i class=\"fas fa-user-slash\"></i> Absents / Suspendus (optionnel)</div>
-      <div style=\"display:grid;grid-template-columns:1fr 1fr;gap:12px;\">
-        <div>
-          <div style=\"font-size:11px;color:var(--bl);font-family:DM Mono,monospace;margin-bottom:6px;\">DOM absents</div>
-          <input id=\"absentHome\" type=\"text\" placeholder=\"ex: Isak, Gordon\" class=\"input-field\">
-        </div>
-        <div>
-          <div style=\"font-size:11px;color:var(--or);font-family:DM Mono,monospace;margin-bottom:6px;\">EXT absents</div>
-          <input id=\"absentAway\" type=\"text\" placeholder=\"ex: Watkins, McGinn\" class=\"input-field\">
-        </div>
-      </div>
-    </div>
-
-    <!-- COTES -->
-    <div class=\"card\">
-      <div style=\"font-family:DM Mono,monospace;font-size:10px;color:var(--ac);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;\"><i class=\"fas fa-coins\"></i> Cotes du match (optionnel)</div>
-      <div style=\"display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;\">
-        <div>
-          <div style=\"font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:6px;\">DOM victoire</div>
-          <input id=\"oddHome\" type=\"number\" step=\"0.01\" min=\"1\" placeholder=\"ex: 2.10\" class=\"input-field\" style=\"color:var(--bl);\">
-        </div>
-        <div>
-          <div style=\"font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:6px;\">Match nul</div>
-          <input id=\"oddDraw\" type=\"number\" step=\"0.01\" min=\"1\" placeholder=\"ex: 3.40\" class=\"input-field\" style=\"color:var(--gd);\">
-        </div>
-        <div>
-          <div style=\"font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:6px;\">EXT victoire</div>
-          <input id=\"oddAway\" type=\"number\" step=\"0.01\" min=\"1\" placeholder=\"ex: 3.80\" class=\"input-field\" style=\"color:var(--or);\">
-        </div>
-      </div>
-      <div style=\"margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;\">
-        <div>
-          <div style=\"font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:6px;\">Over 2.5</div>
-          <input id=\"oddOver\" type=\"number\" step=\"0.01\" min=\"1\" placeholder=\"ex: 1.85\" class=\"input-field\" style=\"color:var(--gr);\">
-        </div>
-        <div>
-          <div style=\"font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:6px;\">BTTS</div>
-          <input id=\"oddBtts\" type=\"number\" step=\"0.01\" min=\"1\" placeholder=\"ex: 1.75\" class=\"input-field\" style=\"color:var(--ac);\">
-        </div>
-      </div>
-      <div style=\"margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;\">
-        <div>
-          <div style=\"font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:6px;\">Over 3.5</div>
-          <input id=\"oddOver35\" type=\"number\" step=\"0.01\" min=\"1\" placeholder=\"ex: 3.20\" class=\"input-field\" style=\"color:var(--gr);\">
-        </div>
-        <div>
-          <div style=\"font-size:11px;color:var(--mt);font-family:DM Mono,monospace;margin-bottom:6px;\">Over 4.5</div>
-          <input id=\"oddOver45\" type=\"number\" step=\"0.01\" min=\"1\" placeholder=\"ex: 6.00\" class=\"input-field\" style=\"color:var(--gr);\">
-        </div>
-      </div>
-    </div>
-    
-    <button class=\"bana\" id=\"bana\" disabled><i class=\"fas fa-chart-bar\"></i> ANALYSER LE MATCH</button>
-    <div class=\"pgw\" id=\"pgw\"><div class=\"pgt\"><div class=\"pgf\" id=\"pgf\"></div></div><div class=\"pgl\" id=\"pgl\">...</div></div>
-    <div class=\"err\" id=\"errmatch\"></div>
-  </div>
-  
-  <div class=\"rep\" id=\"rep\">
-    <div class=\"mhdr fin\" id=\"mhdr\"></div>
-    <div class=\"tcols fin\" id=\"tcols\"></div>
-    <div class=\"sec fin\"><i class=\"fas fa-futbol\"></i> Buteurs Probables</div>
-    <div class=\"scbox fin\" id=\"scbox\"></div>
-    <div class=\"sec fin\"><i class=\"fas fa-chart-pie\"></i> Recommandations Paris</div>
-    <div class=\"fin\" id=\"betsbox\"></div>
-    <div class=\"aib fin\" id=\"aibox\" style=\"display:none\">
-      <div class=\"aih\"><div class=\"aid\"></div><div class=\"ait\"><i class=\"fas fa-robot\"></i> Analyse Tipster IA</div></div>
-      <div id=\"aitx\"></div>
-    </div>
-    <div style=\"margin-top:14px;margin-bottom:6px;\">
-      <button id=\"addToTrackerBtn\" style=\"width:100%;padding:14px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.4);border-radius:14px;color:#c4b5fd;font-family:DM Mono,monospace;font-size:12px;cursor:pointer;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;\">
-        <i class=\"fas fa-crosshairs\"></i> Ajouter ce pari au Tracker
-      </button>
-    </div>
-    <div class=\"disc\">Outil d'information uniquement - Pas un conseil en pari</div>
+  <div class="box">
+    <h3>Away Team</h3>
+    <input type="file" multiple onchange="addFiles(event, 'away')">
+    <div id="awayList"></div>
   </div>
 </div>
 
-<!-- ═══════════ TAB 1 — DONNEES ═══════════ -->
-<div class=\"panel\" id=\"p1\">
-  <div class=\"ctup\">
-    <div class=\"sec\"><i class=\"fas fa-flag\"></i> Selectionner le championnat</div>
-    <div class=\"league-sel-box\">
-      <div class=\"league-sel-row\" id=\"ctxLeagueRow\">
-        <span class=\"league-flag sel\" data-l=\"EPL\">🏴󠁧󠁢󠁥󠁮󠁧󠁿 EPL</span>
-        <span class=\"league-flag\" data-l=\"Ligue 1\">🇫🇷 Ligue 1</span>
-        <span class=\"league-flag\" data-l=\"La Liga\">🇪🇸 La Liga</span>
-        <span class=\"league-flag\" data-l=\"Bundesliga\">🇩🇪 Bundesliga</span>
-        <span class=\"league-flag\" data-l=\"Serie A\">🇮🇹 Serie A</span>
-      </div>
-    </div>
+<button onclick="analyze()">Analyser</button>
 
-    <div class=\"sec\" style=\"margin-top:16px\"><i class=\"fas fa-upload\"></i> Uploader des donnees</div>
-    <div class=\"cugrid\">
-      <input type=\"file\" accept=\"image/*\" multiple style=\"display:none;\" id=\"cui0\">
-      <input type=\"file\" accept=\"image/*\" multiple style=\"display:none;\" id=\"cui1\">
-      <input type=\"file\" accept=\"image/*\" multiple style=\"display:none;\" id=\"cui2\">
-      <input type=\"file\" accept=\"image/*\" multiple style=\"display:none;\" id=\"cui3\">
-      <input type=\"file\" accept=\"image/*\" multiple style=\"display:none;\" id=\"cui4\">
-      <input type=\"file\" accept=\"image/*\" multiple style=\"display:none;\" id=\"cui5\">
-      <input type=\"file\" accept=\"image/*\" multiple style=\"display:none;\" id=\"cui6\">
-      <div class=\"cubtn\" id=\"cub0\">
-        <div class=\"cubi\"><i class=\"fas fa-trophy\"></i></div><div class=\"cubl\">Classement</div>
-        <div class=\"cubs\" id=\"cus0\">Non charge</div><div class=\"cuck\">✓</div>
-      </div>
-      <div class=\"cubtn\" id=\"cub1\">
-        <div class=\"cubi\"><i class=\"fas fa-futbol\"></i></div><div class=\"cubl\">Top Buteurs</div>
-        <div class=\"cubs\" id=\"cus1\">Non charge</div><div class=\"cuck\">✓</div>
-      </div>
-      <div class=\"cubtn\" id=\"cub2\">
-        <div class=\"cubi\"><i class=\"fas fa-users\"></i></div><div class=\"cubl\">Compo DOM</div>
-        <div class=\"cubs\" id=\"cus2\">Non charge</div><div class=\"cuck\">✓</div>
-      </div>
-      <div class=\"cubtn\" id=\"cub3\">
-        <div class=\"cubi\"><i class=\"fas fa-users\"></i></div><div class=\"cubl\">Compo EXT</div>
-        <div class=\"cubs\" id=\"cus3\">Non charge</div><div class=\"cuck\">✓</div>
-      </div>
-      <div class=\"cubtn\" id=\"cub4\">
-        <div class=\"cubi\"><i class=\"fas fa-exchange-alt\"></i></div><div class=\"cubl\">H2H</div>
-        <div class=\"cubs\" id=\"cus4\">Non charge</div><div class=\"cuck\">✓</div>
-      </div>
-      <div class=\"cubtn\" id=\"cub5\">
-        <div class=\"cubi\"><i class=\"fas fa-chart-line\"></i></div><div class=\"cubl\">Forme DOM</div>
-        <div class=\"cubs\" id=\"cus5\">5 derniers matchs</div><div class=\"cuck\">✓</div>
-      </div>
-      <div class=\"cubtn\" id=\"cub6\">
-        <div class=\"cubi\"><i class=\"fas fa-chart-line\"></i></div><div class=\"cubl\">Forme EXT</div>
-        <div class=\"cubs\" id=\"cus6\">5 derniers matchs</div><div class=\"cuck\">✓</div>
-      </div>
-    </div>
-    <div class=\"iload\" id=\"ctxload\"><div class=\"ispin\"></div><div class=\"ilbl\" id=\"ctxlbl\">ANALYSE...</div></div>
-    <div class=\"err\" id=\"errctx\"></div>
-  </div>
-</div>
-
-<!-- ═══════════ TAB 2 — CLASSEMENTS ═══════════ -->
-<div class=\"panel\" id=\"p2\">
-  <div class=\"league-tabs\" id=\"stLeagueTabs\">
-    <button class=\"btn-add-league\" id=\"addStLeague\"><i class=\"fas fa-plus\"></i> Ajouter un championnat</button>
-  </div>
-  <div id=\"stContent\">
-    <div class=\"info\"><i class=\"fas fa-info-circle\"></i> Upload un classement dans l'onglet Donnees pour l'afficher ici. Tu peux avoir plusieurs championnats simultanement.</div>
-  </div>
-</div>
-
-<!-- ═══════════ TAB 3 — BUTEURS ═══════════ -->
-<div class=\"panel\" id=\"p3\">
-  <div class=\"league-tabs\" id=\"scLeagueTabs\">
-    <button class=\"btn-add-league\" id=\"addScLeague\"><i class=\"fas fa-plus\"></i> Ajouter un championnat</button>
-  </div>
-  <div id=\"scContent\">
-    <div class=\"info\"><i class=\"fas fa-info-circle\"></i> Upload un top buteurs dans l'onglet Donnees pour l'afficher ici.</div>
-  </div>
-</div>
-
-<!-- ADD LEAGUE MODAL -->
-<div class=\"modal-ov\" id=\"modalOv\">
-  <div class=\"modal-box\">
-    <div class=\"modal-ttl\"><i class=\"fas fa-plus-circle\"></i> Nouveau championnat</div>
-    <input class=\"modal-input\" id=\"modalInp\" placeholder=\"Ex: Ligue 1, Serie A...\">
-    <div class=\"modal-btns\">
-      <button class=\"btn-ok\" id=\"modalOkBtn\">Ajouter</button>
-      <button class=\"btn-cancel\" id=\"modalCancelBtn\">Annuler</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ TAB 4 — TRACKER ═══ -->
-<div class=\"panel\" id=\"p4\">
-  <div class=\"card\">
-    <div class=\"sec\"><i class=\"fas fa-crosshairs\"></i> Tracker de resultats</div>
-    <p style=\"font-size:13px;color:var(--mt);margin-bottom:16px;line-height:1.8;\">Enregistre tes paris et suis la performance de l'app.</p>
-
-    <div style=\"display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;\">
-      <input id=\"trMatch\" placeholder=\"Ex: Newcastle vs Sunderland\" class=\"input-field\" style=\"grid-column:1/-1;\">
-      <input id=\"trBet\" placeholder=\"Pari joue (ex: Sunderland WIN)\" class=\"input-field\">
-      <input id=\"trCote\" type=\"number\" step=\"0.01\" placeholder=\"Cote\" class=\"input-field\" style=\"color:var(--gd);\">
-      <input id=\"trMise\" type=\"number\" step=\"1\" placeholder=\"Mise (€)\" class=\"input-field\">
-      <select id=\"trResult\" class=\"input-field\">
-        <option value=\"\">Resultat...</option>
-        <option value=\"won\">Gagne</option>
-        <option value=\"lost\">Perdu</option>
-        <option value=\"void\">Void/Rembourse</option>
-      </select>
-      <input id=\"trEdge\" type=\"number\" step=\"0.1\" placeholder=\"Edge detecte (%)\" class=\"input-field\" style=\"color:var(--gr);\">
-    </div>
-    <button id=\"addTrackerBtn\" class=\"bana\" style=\"margin-bottom:18px;\"><i class=\"fas fa-plus\"></i> Ajouter ce pari</button>
-
-    <div id=\"trackerStats\" class=\"tracker-stats\" style=\"display:none;\">
-      <div id=\"trackerStatsContent\"></div>
-    </div>
-    <div id=\"trackerList\"></div>
-  </div>
-</div>
-
-<!-- ═══ TAB 5 — JOURNEE COMPLETE ═══ -->
-<div class=\"panel\" id=\"p5\">
-  <div class=\"card\">
-    <div class=\"sec\" style=\"margin-bottom:12px;\"><i class=\"fas fa-calendar-week\"></i> Analyser une journee complete</div>
-    <p style=\"font-size:13px;color:var(--mt);margin-bottom:16px;line-height:1.8;\">
-      Uploade les screenshots xG de toutes les equipes. L'app detecte automatiquement les matchs et les analyse en lot.
-    </p>
-    <div style=\"background:var(--sf2);border-radius:12px;padding:14px;margin-bottom:16px;\">
-      <div style=\"font-family:DM Mono,monospace;font-size:10px;color:var(--ac);letter-spacing:2px;margin-bottom:10px;\"><i class=\"fas fa-home\"></i> EQUIPES DOM</div>
-      <input type=\"file\" accept=\"image/*\" multiple id=\"dayHomeInput\" style=\"display:none;\">
-      <button type=\"button\" id=\"dayHomeBtn\" class=\"bpk h\" style=\"width:100%;justify-content:center;margin-bottom:8px;\">
-        <i class=\"fas fa-camera\"></i> Screenshots equipes DOM
-      </button>
-      <div id=\"dayHomeStatus\" style=\"font-size:11px;color:var(--mt);font-family:DM Mono,monospace;text-align:center;\"></div>
-    </div>
-    <div style=\"background:var(--sf2);border-radius:12px;padding:14px;margin-bottom:16px;\">
-      <div style=\"font-family:DM Mono,monospace;font-size:10px;color:var(--or);letter-spacing:2px;margin-bottom:10px;\"><i class=\"fas fa-plane\"></i> EQUIPES EXT</div>
-      <input type=\"file\" accept=\"image/*\" multiple id=\"dayAwayInput\" style=\"display:none;\">
-      <button type=\"button\" id=\"dayAwayBtn\" class=\"bpk a\" style=\"width:100%;justify-content:center;margin-bottom:8px;\">
-        <i class=\"fas fa-camera\"></i> Screenshots equipes EXT
-      </button>
-      <div id=\"dayAwayStatus\" style=\"font-size:11px;color:var(--mt);font-family:DM Mono,monospace;text-align:center;\"></div>
-    </div>
-    <button id=\"btnDayTab5\" class=\"bana\" disabled><i class=\"fas fa-chart-bar\"></i> ANALYSER LA JOURNEE</button>
-    <div class=\"iload\" id=\"dayLoaderTab5\"><div class=\"ispin\"></div><div class=\"ilbl\" id=\"dayLblTab5\">ANALYSE...</div></div>
-    <div class=\"err\" id=\"errDay\"></div>
-  </div>
-  <div id=\"dayResults\"></div>
-</div>
-
-<!-- ═══ TAB 6 — HISTORIQUE ═══ -->
-<div class=\"panel\" id=\"p6\">
-  <div class=\"card\">
-    <div style=\"display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;\">
-      <div class=\"sec\" style=\"margin-bottom:0;\"><i class=\"fas fa-history\"></i> 5 Dernieres Analyses</div>
-      <button id=\"clearHistoryBtn\" style=\"padding:6px 14px;background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.3);border-radius:10px;color:var(--rd);font-family:DM Mono,monospace;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;\">
-        <i class=\"fas fa-trash-alt\"></i> Effacer
-      </button>
-    </div>
-    <div id=\"historyList\"><div class=\"info\"><i class=\"fas fa-info-circle\"></i> Aucune analyse sauvegardee. Lance une analyse pour la voir ici.</div></div>
-  </div>
-</div>
-
-</div><!-- /wrap -->
+<div id="result"></div>
 
 <script>
-// Le JavaScript sera dans la partie 2
+/* =========================
+   VARIABLES
+   ========================= */
+
+let homeFiles = [];
+let awayFiles = [];
+
+/* =========================
+   FILE MANAGEMENT
+   ========================= */
+
+function addFiles(event, team) {
+  const files = Array.from(event.target.files);
+
+  if (team === "home") {
+    homeFiles.push(...files);
+    renderFiles("home");
+  } else {
+    awayFiles.push(...files);
+    renderFiles("away");
+  }
+}
+
+function renderFiles(team) {
+  const container = document.getElementById(team + "List");
+  container.innerHTML = "";
+
+  const files = team === "home" ? homeFiles : awayFiles;
+
+  files.forEach((file, index) => {
+    const div = document.createElement("div");
+    div.className = "file";
+
+    div.innerHTML = `
+      ${file.name}
+      <button onclick="removeFile('${team}', ${index})">❌</button>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+function removeFile(team, index) {
+  if (team === "home") {
+    homeFiles.splice(index, 1);
+    renderFiles("home");
+  } else {
+    awayFiles.splice(index, 1);
+    renderFiles("away");
+  }
+}
+
+/* =========================
+   MAIN ANALYSIS
+   ========================= */
+
+async function analyze() {
+  if (homeFiles.length === 0 || awayFiles.length === 0) {
+    alert("Ajoute des fichiers pour les deux équipes");
+    return;
+  }
+
+  document.getElementById("result").innerText = "Analyse en cours...";
+
+  try {
+    const homeText = await readFiles(homeFiles);
+    const awayText = await readFiles(awayFiles);
+
+    const finalPrompt = `
+Analyse ce match de football avec les données suivantes :
+
+HOME TEAM:
+${homeText}
+
+AWAY TEAM:
+${awayText}
+
+Donne :
+- Probabilité de victoire (%)
+- Over/Under 2.5
+- BTTS (oui/non)
+- Score probable
+- Analyse xG détaillée
+`;
+
+    const response = await callAPI(finalPrompt);
+
+    document.getElementById("result").innerText = response;
+
+  } catch (err) {
+    document.getElementById("result").innerText = "Erreur: " + err.message;
+  }
+}
+
+/* =========================
+   FILE READER
+   ========================= */
+
+function readFiles(files) {
+  return Promise.all(files.map(file => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.readAsText(file);
+    });
+  })).then(results => results.join("\n\n"));
+}
+
+/* =========================
+   API CALL (ANTHROPIC)
+   ========================= */
+
+async function callAPI(prompt) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": "TA_CLE_API_ICI",
+      "anthropic-version": "2023-06-01"
+    },
+    body: JSON.stringify({
+      model: "claude-3-sonnet-20240229",
+      max_tokens: 1000,
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ]
+    })
+  });
+
+  const data = await res.json();
+
+  return data.content?.[0]?.text || "Pas de réponse";
+}
+
 </script>
+
 </body>
 </html>
-"
-Observation: Create successful: /app/frontend/public/xgscout.html
