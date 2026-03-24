@@ -863,18 +863,19 @@ function renderThumbs(arr,thumbId){
   var html='';
   arr.forEach(function(item,i){
     var st='';
-    if(item.status==='done')st='<span class="thst std">✓</span>';
-    else if(item.status==='error')st='<span class="thst ste">✗</span>';
-    else if(item.status==='loading')st='<span class="thst stl">…</span>';
-    html+='<div class="thumb"><img src="'+item.url+'" alt=""><button class="thrm" onclick="removeFileAt(''+thumbId+'','+i+')">✕</button>'+st+'</div>';
+    if(item.status==='done')st='<span class="thst std">&#10003;</span>';
+    else if(item.status==='error')st='<span class="thst ste">&#10007;</span>';
+    else if(item.status==='loading')st='<span class="thst stl">...</span>';
+    html+='<div class="thumb"><img src="'+item.url+'" alt=""><button class="thrm" data-thumb="'+thumbId+'" data-idx="'+i+'" onclick="removeFileAt(this)">&#10005;</button>'+st+'</div>';
   });
   var el=document.getElementById(thumbId);if(el)el.innerHTML=html;
 }
-function removeFileAt(thumbId,idx){
+function removeFileAt(btn){
+  var thumbId=btn.getAttribute('data-thumb');
+  var idx=parseInt(btn.getAttribute('data-idx'));
   var arr=thumbId==='hthumbs'?homeFiles:awayFiles;
   removeFile(arr,idx,thumbId);
 }
-
 
 // ═══════════════════════════════════
 //  CTX UPLOADS
