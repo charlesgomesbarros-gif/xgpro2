@@ -4,35 +4,102 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>xG Scout Pro</title>
+
 <style>
-body { font-family: Arial; background:#0f172a; color:white; padding:20px; }
-h1 { text-align:center; }
-.section { margin:20px 0; }
-button { padding:10px 20px; background:#22c55e; border:none; color:white; cursor:pointer; }
+body {
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+}
+
+.section {
+  margin: 20px 0;
+}
+
+.dropzone {
+  border: 2px dashed #334155;
+  padding: 20px;
+  text-align: center;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.preview {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.preview img {
+  width: 100px;
+  border-radius: 8px;
+}
+
+button {
+  padding: 12px 20px;
+  background: #22c55e;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+#result {
+  margin-top: 20px;
+  white-space: pre-wrap;
+}
 </style>
 </head>
+
 <body>
 
 <h1>xG Scout Pro</h1>
 
 <div class="section">
   <h3>Equipe domicile</h3>
-  <input type="file" id="hi" multiple accept="image/*">
+  <input type="file" id="homeInput" multiple accept="image/*">
+  <div id="homePreview" class="preview"></div>
 </div>
 
 <div class="section">
   <h3>Equipe extérieur</h3>
-  <input type="file" id="ai" multiple accept="image/*">
+  <input type="file" id="awayInput" multiple accept="image/*">
+  <div id="awayPreview" class="preview"></div>
 </div>
 
-<div class="section">
-  <button onclick="analyzeMatch()">Analyser</button>
-</div>
+<button onclick="analyze()">Analyser</button>
 
-<pre id="result"></pre>
+<div id="result"></div>
 
 <script>
-async function fileToBase64(file) {
+// preview images
+function showPreview(input, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+
+  [...input.files].forEach(file => {
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    container.appendChild(img);
+  });
+}
+
+document.getElementById("homeInput").addEventListener("change", function(){
+  showPreview(this, "homePreview");
+});
+
+document.getElementById("awayInput").addEventListener("change", function(){
+  showPreview(this, "awayPreview");
+});
+
+// convert base64
+function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result.split(',')[1]);
@@ -41,59 +108,63 @@ async function fileToBase64(file) {
   });
 }
 
-async function analyzeMatch() {
-  const homeFiles = document.getElementById('hi').files;
-  const awayFiles = document.getElementById('ai').files;
+// call API
+async function callAPI(base64, type) {
+  const res = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      image: base64,
+      mediaType: type,
+      hint: 'understat'
+    })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "Erreur API");
+  }
+
+  return data;
+}
+
+// main analyze
+async function analyze() {
+  const homeFiles = document.getElementById("homeInput").files;
+  const awayFiles = document.getElementById("awayInput").files;
 
   if (!homeFiles.length || !awayFiles.length) {
-    alert('Ajoute des images domicile et extérieur');
+    alert("Ajoute images domicile + extérieur");
     return;
   }
 
-  document.getElementById('result').textContent = 'Analyse en cours...';
+  document.getElementById("result").textContent = "Analyse en cours...";
 
   try {
     const results = [];
 
+    // domicile
     for (let file of homeFiles) {
-      const base64 = await fileToBase64(file);
-
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image: base64,
-          mediaType: file.type,
-          hint: 'understat'
-        })
-      });
-
-      const data = await res.json();
-      results.push({ team: 'home', file: file.name, data });
+      const b64 = await fileToBase64(file);
+      const res = await callAPI(b64, file.type);
+      results.push({ team: "home", file: file.name, res });
     }
 
+    // extérieur
     for (let file of awayFiles) {
-      const base64 = await fileToBase64(file);
-
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image: base64,
-          mediaType: file.type,
-          hint: 'understat'
-        })
-      });
-
-      const data = await res.json();
-      results.push({ team: 'away', file: file.name, data });
+      const b64 = await fileToBase64(file);
+      const res = await callAPI(b64, file.type);
+      results.push({ team: "away", file: file.name, res });
     }
 
-    document.getElementById('result').textContent = JSON.stringify(results, null, 2);
+    document.getElementById("result").textContent =
+      JSON.stringify(results, null, 2);
 
   } catch (err) {
     console.error(err);
-    document.getElementById('result').textContent = 'Erreur : ' + err.message;
+    document.getElementById("result").textContent =
+      "Erreur: " + err.message;
   }
 }
 </script>
