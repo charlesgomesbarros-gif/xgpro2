@@ -316,10 +316,7 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
           <div id="dayAwayStatus" style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:5px;"></div>
         </div>
 
-        <button onclick="analyzeDaySelected()" id="btnDay"
-          style="width:100%;padding:12px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:11px;color:#fff;font-family:DM Sans,sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;">
-          ANALYSER LES MATCHS
-        </button>
+
       </div>
 
       <div class="iload" id="dayLoader"><div class="ispin"></div><div class="ilbl" id="dayLbl">ANALYSE...</div></div>
@@ -1199,17 +1196,32 @@ async function doAnalyze(){
     window._lastHomeRaw=hm?JSON.parse(JSON.stringify(hm)):null;
     window._lastAwayRaw=am?JSON.parse(JSON.stringify(am)):null;
     var d=buildMatchData(hm,am,hn,an,odds,absentHome,absentAway);
-    setProg(100,'Termine !');
-    await new Promise(function(r){setTimeout(r,200);});
     document.getElementById('pgw').style.display='none';
     document.getElementById('bana').disabled=false;
+    // Vérifier données manquantes — bloquer si incomplet
+    var _miss=[];
+    if(homeFiles.length>0){
+      if(d.hxg==null)  _miss.push({team:d.ht,side:'h',field:'xG',id:'mf_hxg'});
+      if(d.hxga==null) _miss.push({team:d.ht,side:'h',field:'xGA',id:'mf_hxga'});
+      if(d.hs==null)   _miss.push({team:d.ht,side:'h',field:'Buts',id:'mf_hs'});
+    }
+    if(awayFiles.length>0){
+      if(d.axg==null)  _miss.push({team:d.at,side:'a',field:'xG',id:'mf_axg'});
+      if(d.axga==null) _miss.push({team:d.at,side:'a',field:'xGA',id:'mf_axga'});
+      if(d.as==null)   _miss.push({team:d.at,side:'a',field:'Buts',id:'mf_as'});
+    }
+    if(_miss.length){showMissingForm(_miss,d);return;}
     window._lastMatchData=d;
-    // Call tipster API here, then render
     setProg(95,'Analyse tipster IA...');
     try {
-      var _tipTO=new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},8000);});
-      var _tipFetch=fetch('/api/tipster',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({matchData:{ht:d.ht,at:d.at,hxg:d.hxg,axg:d.axg,hxga:d.hxga,axga:d.axga,hr:d.hr,ar:d.ar,adjXgH:d.adjXgH,adjXgA:d.adjXgA,hstand:d.hstand,astand:d.astand,bets:d.bets,absHome:document.getElementById('absentHome')?document.getElementById('absentHome').value:'',absAway:document.getElementById('absentAway')?document.getElementById('absentAway').value:''}})}).then(function(r){return r.json();});
-      var tdata=await Promise.race([_tipFetch,_tipTO]);
+      var _tTO=new Promise(function(_,r){setTimeout(function(){r(new Error('to'));},8000);});
+      var _tF=fetch('/api/tipster',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({matchData:{ht:d.ht,at:d.at,hxg:d.hxg,axg:d.axg,hxga:d.hxga,axga:d.axga,
+        hr:d.hr,ar:d.ar,adjXgH:d.adjXgH,adjXgA:d.adjXgA,hstand:d.hstand,astand:d.astand,bets:d.bets,
+        absHome:document.getElementById('absentHome')?document.getElementById('absentHome').value:'',
+        absAway:document.getElementById('absentAway')?document.getElementById('absentAway').value:''}})
+      }).then(function(r){return r.json();});
+      var tdata=await Promise.race([_tF,_tTO]);
       if(tdata&&tdata.analysis) d._tipsterAnalysis=tdata.analysis;
       else d._tipsterAnalysis=buildLocalTipster(d);
     } catch(e2){ d._tipsterAnalysis=buildLocalTipster(d); }
@@ -1230,45 +1242,79 @@ async function doAnalyze(){
 
 function setProg(pct,lbl){document.getElementById('pgf').style.width=pct+'%';document.getElementById('pgl').textContent=lbl;}
 
-function reanalyzeManual(){
-  if(!window._lastMatchData)return;
-  var d=window._lastMatchData;
-  var hRaw=window._lastHomeRaw?JSON.parse(JSON.stringify(window._lastHomeRaw)):{team_name:d.ht,team_xG_total:d.hxg};
-  var aRaw=window._lastAwayRaw?JSON.parse(JSON.stringify(window._lastAwayRaw)):{team_name:d.at,team_xG_total:d.axg};
-  ['mw_hxga','mw_axga','mw_hs','mw_as'].forEach(function(id){
-    var el=document.getElementById(id);if(!el||!el.value)return;
-    var val=parseFloat(el.value);
-    if(id==='mw_hxga'){hRaw.team_xGA_total=val;hRaw.xGA=val;}
-    if(id==='mw_axga'){aRaw.team_xGA_total=val;aRaw.xGA=val;}
-    if(id==='mw_hs'){hRaw.team_goals_total=val;}
-    if(id==='mw_as'){aRaw.team_goals_total=val;}
-  });
-  var newD=buildMatchData(hRaw,aRaw,d.ht,d.at,d.odds||{});
-  newD._tipsterAnalysis=buildLocalTipster(newD);
-  window._lastMatchData=newD;
-  window._lastHomeRaw=hRaw;window._lastAwayRaw=aRaw;
-  renderReport(newD);
-}
-
 function buildLocalTipster(d){
   var b=d.bets||{};
-  var hxg=((d.adjXgH||d.hxg)||0).toFixed(2),axg=((d.adjXgA||d.axg)||0).toFixed(2);
-  var hWin=b.hw?b.hw.pct:0,aWin=b.aw?b.aw.pct:0,dr=b.draw?b.draw.pct:0;
-  var over=b.over?b.over.pct:0,btts=b.btts?b.btts.pct:0;
-  var vals=b.values&&b.values.length?b.values.map(function(v){return v.label+' (edge +'+v.val.edge+'%)';}).join(', '):'aucune';
-  var conf=b.signalLevel||0;
-  var confTxt=conf>=3?'Fort (8/10)':conf>=2?'Bon (6/10)':conf>=1?'Moyen (4/10)':'Faible (2/10)';
-  var txt='Analyse : '+d.ht+' (xG/match '+hxg+') vs '+d.at+' (xG/match '+axg+'). ';
-  if(hWin>aWin+10) txt+=d.ht+' favori ('+hWin+'% vs '+aWin+'%). ';
-  else if(aWin>hWin+10) txt+=d.at+' favori ('+aWin+'% vs '+hWin+'%). ';
-  else txt+='Match équilibré ('+d.ht+' '+hWin+'% / Nul '+dr+'% / '+d.at+' '+aWin+'%). ';
-  if(over>=55) txt+='Fort potentiel offensif (Over 2.5: '+over+'%). ';
-  if(btts>=55) txt+='BTTS probable ('+btts+'%). ';
-  if(d.hr>115) txt+=d.ht+' surperforme ('+Math.round(d.hr)+'%), régression possible. ';
-  if(d.ar!=null&&d.ar<85) txt+=d.at+' sous-performe ('+Math.round(d.ar)+'%), réveil possible. ';
-  txt+='\nValue Bet : '+(vals!=='aucune'?vals:(b.best?b.best.label+' ('+b.best.pct+'%)':'NO BET'))+'.';
-  txt+='\nConfiance : '+confTxt+'.';
-  return txt;
+  var hx=((d.adjXgH||d.hxg)||0).toFixed(2), ax=((d.adjXgA||d.axg)||0).toFixed(2);
+  var hW=b.hw?b.hw.pct:0, aW=b.aw?b.aw.pct:0, dr=b.draw?b.draw.pct:0;
+  var ov=b.over?b.over.pct:0, bt=b.btts?b.btts.pct:0;
+  var vl=b.values&&b.values.length?b.values.map(function(v){return v.label+' (+'+v.val.edge+'% edge)';}).join(', '):'aucune';
+  var cf=b.signalLevel||0, cft=cf>=3?'Fort (8/10)':cf>=2?'Bon (6/10)':cf>=1?'Moyen (4/10)':'Faible (2/10)';
+  var t='Analyse : '+d.ht+' (xG/match '+hx+') vs '+d.at+' (xG/match '+ax+'). ';
+  t+=hW>aW+10?d.ht+' favori ('+hW+'% vs '+aW+'%). ':aW>hW+10?d.at+' favori ('+aW+'% vs '+hW+'%). ':'Match équilibré ('+d.ht+' '+hW+'% / Nul '+dr+'% / '+d.at+' '+aW+'%). ';
+  if(ov>=55) t+='Fort potentiel offensif (Over 2.5: '+ov+'%). ';
+  if(bt>=55) t+='BTTS probable ('+bt+'%). ';
+  if(d.hr>115) t+=d.ht+' surperforme ('+Math.round(d.hr)+'%), régression possible. ';
+  if(d.ar!=null&&d.ar<85) t+=d.at+' sous-performe ('+Math.round(d.ar)+'%), réveil possible. ';
+  t+='\nValue Bet : '+(vl!=='aucune'?vl:(b.best?b.best.label+' ('+b.best.pct+'%)':'NO BET'))+'.';
+  t+='\nConfiance : '+cft+'.';
+  return t;
+}
+
+function showMissingForm(missing,d){
+  document.getElementById('rep').style.display='block';
+  var html='<div style="background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.35);border-radius:14px;padding:20px;margin-bottom:14px;">';
+  html+='<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--rd);letter-spacing:2px;margin-bottom:10px;">⚠ DONNÉES MANQUANTES — SAISIE REQUISE AVANT ANALYSE</div>';
+  html+='<div style="font-size:12px;color:var(--mt);margin-bottom:14px;">Ces valeurs sont sur ton screenshot mais n'ont pas été lues. Remplis-les pour lancer l'analyse :</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px;">';
+  missing.forEach(function(m){
+    var col=m.side==='h'?'var(--bl)':'var(--or)';
+    html+='<div style="background:var(--sf2);border-radius:10px;padding:10px;">';
+    html+='<div style="font-family:DM Mono,monospace;font-size:10px;color:'+col+';margin-bottom:5px;letter-spacing:1px;">'+m.field+' — '+m.team+'</div>';
+    html+='<input id="'+m.id+'" type="number" step="0.01" min="0" placeholder="ex: 38.5" style="width:100%;background:var(--sf);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:7px 9px;color:var(--tx);font-family:DM Mono,monospace;font-size:13px;outline:none;" oninput="checkMF()">';
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='<button id="btnMF" onclick="submitMF()" disabled style="width:100%;padding:11px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);border-radius:10px;color:#9ca3af;font-family:DM Mono,monospace;font-size:12px;letter-spacing:2px;cursor:not-allowed;transition:all .2s;">REMPLIS TOUS LES CHAMPS POUR ANALYSER</button>';
+  html+='</div>';
+  document.getElementById('rep').innerHTML=html;
+  window._mfData={missing:missing,d:d};
+}
+
+function checkMF(){
+  if(!window._mfData)return;
+  var ok=window._mfData.missing.every(function(m){var e=document.getElementById(m.id);return e&&e.value&&parseFloat(e.value)>0;});
+  var btn=document.getElementById('btnMF');if(!btn)return;
+  btn.disabled=!ok;
+  btn.style.background=ok?'linear-gradient(135deg,var(--ac2),#5b21b6)':'rgba(124,58,237,.2)';
+  btn.style.color=ok?'#fff':'#9ca3af';
+  btn.style.cursor=ok?'pointer':'not-allowed';
+  btn.textContent=ok?'↗ LANCER L'ANALYSE COMPLÈTE':'REMPLIS TOUS LES CHAMPS POUR ANALYSER';
+}
+
+async function submitMF(){
+  if(!window._mfData)return;
+  var p=window._mfData, d=p.d;
+  var hR=window._lastHomeRaw||{team_name:d.ht,team_xG_total:d.hxg};
+  var aR=window._lastAwayRaw||{team_name:d.at,team_xG_total:d.axg};
+  p.missing.forEach(function(m){
+    var v=parseFloat(document.getElementById(m.id).value);
+    if(m.id==='mf_hxg'){hR.team_xG_total=v;}
+    if(m.id==='mf_axg'){aR.team_xG_total=v;}
+    if(m.id==='mf_hxga'){hR.team_xGA_total=v;hR.xGA=v;}
+    if(m.id==='mf_axga'){aR.team_xGA_total=v;aR.xGA=v;}
+    if(m.id==='mf_hs'){hR.team_goals_total=v;}
+    if(m.id==='mf_as'){aR.team_goals_total=v;}
+  });
+  window._lastHomeRaw=hR;window._lastAwayRaw=aR;
+  var newD=buildMatchData(hR,aR,d.ht,d.at,d.odds||{});
+  window._lastMatchData=newD;window._mfData=null;
+  try{
+    var _t=new Promise(function(_,r){setTimeout(function(){r(new Error('to'));},8000);});
+    var _f=fetch('/api/tipster',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({matchData:{ht:newD.ht,at:newD.at,hxg:newD.hxg,axg:newD.axg,hxga:newD.hxga,axga:newD.axga,bets:newD.bets}})}).then(function(r){return r.json();});
+    var td=await Promise.race([_f,_t]);
+    if(td&&td.analysis)newD._tipsterAnalysis=td.analysis;else newD._tipsterAnalysis=buildLocalTipster(newD);
+  }catch(e){newD._tipsterAnalysis=buildLocalTipster(newD);}
+  renderReport(newD);
 }
 
 async function analyzeSide(files,thumbId){
@@ -1354,6 +1400,7 @@ function buildMatchData(hm,am,hn,an,odds,absentHome,absentAway){
     var xg90 = s.xG90 ? parseFloat(s.xG90) : 0;
     if(!xg90 && s.xG && s.apps) xg90 = parseFloat(s.xG) / parseFloat(s.apps);
     if(!xg90 && s.xG && s.matches_played) xg90 = parseFloat(s.xG) / parseFloat(s.matches_played);
+    // P(marquer) = 1 - e^(-xG90), plafond 52%
     return xg90 > 0 ? Math.min(Math.round((1 - Math.exp(-xg90)) * 100), 52) : 0;
   }
   function scorerEdge(pct, cote){
@@ -1769,23 +1816,6 @@ function renderReport(d){
       +'</div>';
   }
   document.getElementById('tcols').innerHTML=tcard(d.ht,d.hs,d.hxg,d.hxga,d.hr,d.hst,'home',d.hstand)+tcard(d.at,d.as,d.axg,d.axga,d.ar,d.ast,'away',d.astand);
-  // Bannière données manquantes (non bloquant - juste informatif avec réanalyse)
-  var _xgaEl=document.getElementById('xgaWarn');
-  if(!_xgaEl){_xgaEl=document.createElement('div');_xgaEl.id='xgaWarn';var _tc=document.getElementById('tcols');_tc.parentNode.insertBefore(_xgaEl,_tc.nextSibling);}
-  var _mf=[];
-  if(d.hxga==null)_mf.push({team:d.ht,side:'h',field:'xGA',id:'mw_hxga'});
-  if(d.axga==null)_mf.push({team:d.at,side:'a',field:'xGA',id:'mw_axga'});
-  if(d.hs==null)_mf.push({team:d.ht,side:'h',field:'Buts',id:'mw_hs'});
-  if(d.as==null)_mf.push({team:d.at,side:'a',field:'Buts',id:'mw_as'});
-  if(_mf.length){
-    var _wh='<div style="background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.3);border-radius:12px;padding:12px 15px;margin:10px 0;">';
-    _wh+='<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--rd);letter-spacing:2px;margin-bottom:8px;">⚠ DONNÉES MANQUANTES — ENTRE POUR AFFINER</div>';
-    _wh+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
-    _mf.forEach(function(m){var col=m.side==='h'?'var(--bl)':'var(--or)';_wh+='<div style="display:flex;align-items:center;gap:5px;"><span style="font-family:DM Mono,monospace;font-size:11px;color:'+col+';">'+m.field+' '+m.team+'</span><input id="'+m.id+'" type="number" step="0.01" min="0" placeholder="ex: 38.5" style="width:85px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:5px 7px;color:var(--tx);font-family:DM Mono,monospace;font-size:12px;outline:none;"></div>';});
-    _wh+='<button onclick="reanalyzeManual()" style="padding:6px 14px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:7px;color:#fff;font-family:DM Mono,monospace;font-size:11px;cursor:pointer;font-weight:700;">↻ Réanalyser</button>';
-    _wh+='</div></div>';
-    _xgaEl.innerHTML=_wh;_xgaEl.style.display='block';
-  } else {_xgaEl.style.display='none';}
   // Scorers
   _currentMatchData=d;
   renderScorers(d,'all');
@@ -2332,7 +2362,6 @@ function updateDayBtn(){
 
 async function loadDayTeamFiles(files, side){
   var statusId = side==='home' ? 'dayHomeStatus' : 'dayAwayStatus';
-  var btnId = side==='home' ? 'dayHomeSsBtn' : 'dayAwaySsBtn';
   var status=document.getElementById(statusId);
   if(status){ status.textContent='Analyse '+files.length+' screenshot(s)...'; status.style.color='var(--ac)'; }
   var results=[];
@@ -2346,7 +2375,7 @@ async function loadDayTeamFiles(files, side){
   }
   if(side==='home') _dayHomeData=results;
   else _dayAwayData=results;
-  // Associate data with matches
+  // Associer les données aux matchs
   _dayMatches_list.forEach(function(m){
     var hd=findTeamData(m.ht);
     var ad=findTeamData(m.at);
@@ -2355,11 +2384,24 @@ async function loadDayTeamFiles(files, side){
   });
   var names=results.map(function(r){return r._name;}).join(', ');
   if(status){ status.textContent=results.length+' equipe(s): '+names; status.style.color='var(--gr)'; }
-  var btn=document.getElementById(btnId);
-  if(btn&&results.length){ btn.style.borderColor='rgba(34,211,165,.4)'; btn.style.color='var(--gr)'; }
-  // Re-render checkboxes with updated data status
+  // Re-render checkboxes
   if(_dayMatches_list.length) renderDayMatchCheckboxes();
-  updateDayBtn();
+  // Analyser automatiquement les matchs qui ont maintenant leurs 2 équipes
+  autoAnalyzeReadyMatches();
+}
+
+function autoAnalyzeReadyMatches(){
+  // Analyser tous les matchs qui ont homeData ET awayData
+  var readyMatches=_dayMatches_list.filter(function(m){ return m.homeData&&m.awayData; });
+  if(!readyMatches.length) return;
+  var matches=[];
+  readyMatches.forEach(function(m){
+    var d=buildMatchData(m.homeData,m.awayData,m.ht,m.at,{});
+    d._matchKey=m.ht+'_'+m.at;
+    matches.push(d);
+  });
+  window._dayMatches=matches;
+  renderDayResults(matches);
 }
 
 
