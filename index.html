@@ -233,6 +233,8 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
   <button class="tab"     id="tb2">Classements</button>
   <button class="tab"     id="tb3">Buteurs</button>
   <button class="tab"     id="tb4">🎯 Tracker</button>
+  <button class="tab"     id="tb5">📅 Journée</button>
+  <button class="tab"     id="tb6">📋 Historique</button>
 </div>
 
 <!-- ═══════════ TAB 0 — ANALYSE ═══════════ -->
@@ -316,7 +318,10 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
           <div id="dayAwayStatus" style="font-size:10px;color:var(--mt);font-family:DM Mono,monospace;margin-top:5px;"></div>
         </div>
 
-
+        <button onclick="analyzeDaySelected()" id="btnDay"
+          style="width:100%;padding:12px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:11px;color:#fff;font-family:DM Sans,sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;" disabled>
+          ANALYSER LES MATCHS
+        </button>
       </div>
 
       <div class="iload" id="dayLoader"><div class="ispin"></div><div class="ilbl" id="dayLbl">ANALYSE...</div></div>
@@ -550,8 +555,8 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
 </div>
 
 
-<!-- ═══ TAB 4 — JOURNEE COMPLETE ═══ -->
-<div class="panel" id="p4">
+<!-- ═══ TAB 5 — JOURNEE COMPLETE ═══ -->
+<div class="panel" id="p5">
   <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:16px;margin-bottom:14px;">
     <div class="sec" style="margin-bottom:10px;">Analyser une journee complete</div>
     <p style="font-size:13px;color:var(--mt);margin-bottom:14px;line-height:1.7;">
@@ -576,8 +581,8 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
   <div id="dayResults"></div>
 </div>
 
-<!-- ═══ TAB 5 — HISTORIQUE ═══ -->
-<div class="panel" id="p5">
+<!-- ═══ TAB 6 — HISTORIQUE ═══ -->
+<div class="panel" id="p6">
   <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:16px;margin-bottom:14px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
       <div class="sec" style="margin-bottom:0;">5 Dernieres Analyses</div>
@@ -586,28 +591,6 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
     <div id="historyList"><div class="info">Aucune analyse sauvegardee. Lance une analyse pour la voir ici.</div></div>
   </div>
 </div>
-
-<!-- ═══ TAB 4 — TRACKER ═══ -->
-<div class="panel" id="p4">
-  <!-- STATS GLOBALES -->
-  <div id="trackerStats" style="display:none;margin-bottom:14px;">
-    <div style="background:var(--sf);border:1px solid var(--bd);border-radius:15px;padding:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div class="sec" style="margin-bottom:0;">Precision globale</div>
-        <button onclick="clearTracker()" style="padding:5px 12px;background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.25);border-radius:8px;color:var(--rd);font-family:DM Mono,monospace;font-size:10px;cursor:pointer;">Tout effacer</button>
-      </div>
-      <div id="trackerStatsContent"></div>
-    </div>
-  </div>
-  <!-- RECHERCHE -->
-  <div style="background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:10px 14px;margin-bottom:12px;">
-    <input id="trackerSearch" type="text" placeholder="Rechercher un match ou equipe..." oninput="renderTracker()"
-      style="width:100%;background:transparent;border:none;outline:none;color:var(--tx);font-family:DM Sans,sans-serif;font-size:13px;">
-  </div>
-  <!-- LISTE -->
-  <div id="trackerList"><div class="info">Aucun pari tracker. Lance une analyse et clique "Ajouter au Tracker".</div></div>
-</div>
-
 </div><!-- /wrap -->
 <script>
 // ═══════════════════════════════════
@@ -709,7 +692,7 @@ function resetAll(){
 // ═══════════════════════════════════
 //  TABS
 // ═══════════════════════════════════
-[0,1,2,3,4].forEach(function(i){
+[0,1,2,3,4,5,6].forEach(function(i){
   var btn=document.getElementById('tb'+i);
   if(!btn)return;
   btn.addEventListener('click',function(){showTab(i);});
@@ -717,7 +700,7 @@ function resetAll(){
 });
 
 function showTab(i){
-  for(var j=0;j<5;j++){
+  for(var j=0;j<7;j++){
     var b=document.getElementById('tb'+j);
     var p=document.getElementById('p'+j);
     if(b)b.className='tab'+(j===i?' on':'');
@@ -891,11 +874,49 @@ function toB64(file){
   });
 }
 
-async function callAPI(b64,mt,hint){
-  var resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:mt,hint:hint})});
-  var data=await resp.json();
-  if(data.error) throw new Error(data.error);
-  return data;
+// Prompts Anthropic par type d'analyse
+var _PROMPTS = {
+  understat: 'Analyse ce screenshot Understat de statistiques football. Retourne UNIQUEMENT un JSON valide sans markdown avec ces champs: team_name (string), team_xG_total (number), team_xGA_total (number), team_goals_total (number), matches_played (number), top_scorers (array de {name, goals, xG, apps, xG90, score_probability}). IMPORTANT: extrais TOUTES les valeurs numériques visibles sur le screenshot, notamment xG et xGA qui sont obligatoires.',
+  calendar: 'Analyse ce screenshot calendrier football. Retourne UNIQUEMENT ce JSON: {"fixtures":[{"home":"DOM","away":"EXT","time":"heure"}]}. Extrais tous les matchs visibles.',
+  standings: 'Analyse ce classement football. Retourne UNIQUEMENT ce JSON: {"league":"nom","teams":[{"rank":1,"name":"Equipe","played":20,"wins":12,"draws":4,"losses":4,"gf":35,"ga":18,"gd":17,"points":40,"form":"WWDLW"}]}.',
+  topscorers: 'Analyse ce top buteurs. Retourne UNIQUEMENT ce JSON: {"league":"nom","players":[{"rank":1,"name":"Joueur","team":"Equipe","goals":15,"xG":12.5,"apps":20}]}.',
+  'lineup-home': 'Analyse cette compo equipe domicile. Retourne UNIQUEMENT ce JSON: {"team":"nom","formation":"4-3-3","players":[{"name":"Nom","position":"GK"}]}.',
+  'lineup-away': 'Analyse cette compo equipe exterieur. Retourne UNIQUEMENT ce JSON: {"team":"nom","formation":"4-3-3","players":[{"name":"Nom","position":"GK"}]}.',
+  'lastgames-home': 'Analyse ces derniers matchs equipe domicile. Retourne UNIQUEMENT ce JSON: {"team":"nom","matches":[{"date":"","opponent":"","home_away":"H","goals":2,"goals_against":1,"xG":1.8,"xGA":0.9,"result":"W"}]}.',
+  'lastgames-away': 'Analyse ces derniers matchs equipe exterieur. Retourne UNIQUEMENT ce JSON: {"team":"nom","matches":[{"date":"","opponent":"","home_away":"A","goals":2,"goals_against":1,"xG":1.8,"xGA":0.9,"result":"W"}]}.',
+  h2h: 'Analyse cet historique H2H. Retourne UNIQUEMENT ce JSON: {"matches":[{"date":"","home":"","away":"","homeGoals":2,"awayGoals":1}]}.'
+};
+
+async function callAPI(b64, mt, hint) {
+  var prompt = _PROMPTS[hint] || _PROMPTS.understat;
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: mt || 'image/png', data: b64 } },
+          { type: 'text', text: prompt }
+        ]}]
+      })
+    });
+    var raw = await resp.json();
+    if (raw.error) throw new Error(raw.error.message || JSON.stringify(raw.error));
+    var text = (raw.content || []).map(function(x){ return x.type==='text'?x.text:''; }).join('');
+    text = text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    try { return JSON.parse(text); }
+    catch(e) { var m=text.match(/\{[\s\S]*\}/); if(m) return JSON.parse(m[0]); throw new Error('JSON invalide: '+text.slice(0,80)); }
+  } catch(err) {
+    // Fallback vers backend si Anthropic échoue
+    try {
+      var r2 = await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:mt,hint:hint})});
+      var d2 = await r2.json();
+      if(d2.error) throw new Error(d2.error);
+      return d2;
+    } catch(e2) { throw err; }
+  }
 }
 
 async function handleCtx(files,type,idx){
@@ -1198,7 +1219,7 @@ async function doAnalyze(){
     var d=buildMatchData(hm,am,hn,an,odds,absentHome,absentAway);
     document.getElementById('pgw').style.display='none';
     document.getElementById('bana').disabled=false;
-    // Vérifier données manquantes — bloquer si incomplet
+    // Bloquer si données manquantes pour équipes uploadées
     var _miss=[];
     if(homeFiles.length>0){
       if(d.hxg==null)  _miss.push({team:d.ht,side:'h',field:'xG',id:'mf_hxg'});
@@ -1210,14 +1231,15 @@ async function doAnalyze(){
       if(d.axga==null) _miss.push({team:d.at,side:'a',field:'xGA',id:'mf_axga'});
       if(d.as==null)   _miss.push({team:d.at,side:'a',field:'Buts',id:'mf_as'});
     }
-    if(_miss.length){showMissingForm(_miss,d);return;}
+    if(_miss.length){ showMissingForm(_miss,d); return; }
     window._lastMatchData=d;
     setProg(95,'Analyse tipster IA...');
     try {
       var _tTO=new Promise(function(_,r){setTimeout(function(){r(new Error('to'));},8000);});
       var _tF=fetch('/api/tipster',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({matchData:{ht:d.ht,at:d.at,hxg:d.hxg,axg:d.axg,hxga:d.hxga,axga:d.axga,
-        hr:d.hr,ar:d.ar,adjXgH:d.adjXgH,adjXgA:d.adjXgA,hstand:d.hstand,astand:d.astand,bets:d.bets,
+        body:JSON.stringify({matchData:{ht:d.ht,at:d.at,hxg:d.hxg,axg:d.axg,hxga:d.hxga,
+        axga:d.axga,hr:d.hr,ar:d.ar,adjXgH:d.adjXgH,adjXgA:d.adjXgA,
+        hstand:d.hstand,astand:d.astand,bets:d.bets,
         absHome:document.getElementById('absentHome')?document.getElementById('absentHome').value:'',
         absAway:document.getElementById('absentAway')?document.getElementById('absentAway').value:''}})
       }).then(function(r){return r.json();});
@@ -1244,13 +1266,13 @@ function setProg(pct,lbl){document.getElementById('pgf').style.width=pct+'%';doc
 
 function buildLocalTipster(d){
   var b=d.bets||{};
-  var hx=((d.adjXgH||d.hxg)||0).toFixed(2), ax=((d.adjXgA||d.axg)||0).toFixed(2);
-  var hW=b.hw?b.hw.pct:0, aW=b.aw?b.aw.pct:0, dr=b.draw?b.draw.pct:0;
-  var ov=b.over?b.over.pct:0, bt=b.btts?b.btts.pct:0;
+  var hx=((d.adjXgH||d.hxg)||0).toFixed(2),ax=((d.adjXgA||d.axg)||0).toFixed(2);
+  var hW=b.hw?b.hw.pct:0,aW=b.aw?b.aw.pct:0,dr=b.draw?b.draw.pct:0;
+  var ov=b.over?b.over.pct:0,bt=b.btts?b.btts.pct:0;
   var vl=b.values&&b.values.length?b.values.map(function(v){return v.label+' (+'+v.val.edge+'% edge)';}).join(', '):'aucune';
-  var cf=b.signalLevel||0, cft=cf>=3?'Fort (8/10)':cf>=2?'Bon (6/10)':cf>=1?'Moyen (4/10)':'Faible (2/10)';
+  var cf=b.signalLevel||0,cft=cf>=3?'Fort (8/10)':cf>=2?'Bon (6/10)':cf>=1?'Moyen (4/10)':'Faible (2/10)';
   var t='Analyse : '+d.ht+' (xG/match '+hx+') vs '+d.at+' (xG/match '+ax+'). ';
-  t+=hW>aW+10?d.ht+' favori ('+hW+'% vs '+aW+'%). ':aW>hW+10?d.at+' favori ('+aW+'% vs '+hW+'%). ':'Match équilibré ('+d.ht+' '+hW+'% / Nul '+dr+'% / '+d.at+' '+aW+'%). ';
+  t+=hW>aW+10?d.ht+' favori ('+hW+'% vs '+aW+'%). ':aW>hW+10?d.at+' favori ('+aW+'% vs '+hW+'%). ':'Équilibré ('+d.ht+' '+hW+'% / Nul '+dr+'% / '+d.at+' '+aW+'%). ';
   if(ov>=55) t+='Fort potentiel offensif (Over 2.5: '+ov+'%). ';
   if(bt>=55) t+='BTTS probable ('+bt+'%). ';
   if(d.hr>115) t+=d.ht+' surperforme ('+Math.round(d.hr)+'%), régression possible. ';
@@ -1260,23 +1282,28 @@ function buildLocalTipster(d){
   return t;
 }
 
-function showMissingForm(missing,d){
-  document.getElementById('rep').style.display='block';
+function showMissingForm(missing, d){
+  var rep=document.getElementById('rep');
+  rep.style.display='block';
   var html='<div style="background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.35);border-radius:14px;padding:20px;margin-bottom:14px;">';
-  html+='<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--rd);letter-spacing:2px;margin-bottom:10px;">⚠ DONNÉES MANQUANTES — SAISIE REQUISE AVANT ANALYSE</div>';
-  html+='<div style="font-size:12px;color:var(--mt);margin-bottom:14px;">Ces valeurs sont sur ton screenshot mais n'ont pas été lues. Remplis-les pour lancer l'analyse :</div>';
-  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px;">';
+  html+='<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--rd);letter-spacing:2px;margin-bottom:10px;">⚠ DONNÉES MANQUANTES — SAISIE REQUISE</div>';
+  html+='<div style="font-size:12px;color:var(--mt);margin-bottom:14px;">Ces valeurs sont sur ton screenshot mais n'ont pas été lues par Claude. Saisis-les pour lancer l'analyse :</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:14px;">';
   missing.forEach(function(m){
     var col=m.side==='h'?'var(--bl)':'var(--or)';
-    html+='<div style="background:var(--sf2);border-radius:10px;padding:10px;">';
-    html+='<div style="font-family:DM Mono,monospace;font-size:10px;color:'+col+';margin-bottom:5px;letter-spacing:1px;">'+m.field+' — '+m.team+'</div>';
-    html+='<input id="'+m.id+'" type="number" step="0.01" min="0" placeholder="ex: 38.5" style="width:100%;background:var(--sf);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:7px 9px;color:var(--tx);font-family:DM Mono,monospace;font-size:13px;outline:none;" oninput="checkMF()">';
-    html+='</div>';
+    html+='<div style="background:var(--sf2);border-radius:10px;padding:10px;">'
+      +'<div style="font-family:DM Mono,monospace;font-size:10px;color:'+col+';margin-bottom:5px;letter-spacing:1px;">'+m.field+' — '+m.team+'</div>'
+      +'<input id="'+m.id+'" type="number" step="0.01" min="0" placeholder="ex: 38.5" '
+      +'style="width:100%;background:var(--sf);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:7px 9px;color:var(--tx);font-family:DM Mono,monospace;font-size:13px;outline:none;" '
+      +'oninput="checkMF()">'
+      +'</div>';
   });
   html+='</div>';
-  html+='<button id="btnMF" onclick="submitMF()" disabled style="width:100%;padding:11px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);border-radius:10px;color:#9ca3af;font-family:DM Mono,monospace;font-size:12px;letter-spacing:2px;cursor:not-allowed;transition:all .2s;">REMPLIS TOUS LES CHAMPS POUR ANALYSER</button>';
+  html+='<button id="btnMF" onclick="submitMF()" disabled '
+    +'style="width:100%;padding:11px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);border-radius:10px;color:#9ca3af;font-family:DM Mono,monospace;font-size:12px;letter-spacing:2px;cursor:not-allowed;transition:all .2s;">'
+    +'REMPLIS TOUS LES CHAMPS POUR ANALYSER</button>';
   html+='</div>';
-  document.getElementById('rep').innerHTML=html;
+  rep.innerHTML=html;
   window._mfData={missing:missing,d:d};
 }
 
@@ -1293,18 +1320,17 @@ function checkMF(){
 
 async function submitMF(){
   if(!window._mfData)return;
-  var p=window._mfData, d=p.d;
+  var p=window._mfData,d=p.d;
   var hR=window._lastHomeRaw||{team_name:d.ht,team_xG_total:d.hxg};
   var aR=window._lastAwayRaw||{team_name:d.at,team_xG_total:d.axg};
   p.missing.forEach(function(m){
     var v=parseFloat(document.getElementById(m.id).value);
-    if(m.id==='mf_hxg'){hR.team_xG_total=v;}
-    if(m.id==='mf_axg'){aR.team_xG_total=v;}
-    if(m.id==='mf_hxga'){hR.team_xGA_total=v;hR.xGA=v;}
-    if(m.id==='mf_axga'){aR.team_xGA_total=v;aR.xGA=v;}
-    if(m.id==='mf_hs'){hR.team_goals_total=v;}
-    if(m.id==='mf_as'){aR.team_goals_total=v;}
+    if(m.id==='mf_hxg'){hR.team_xG_total=v;} if(m.id==='mf_axg'){aR.team_xG_total=v;}
+    if(m.id==='mf_hxga'){hR.team_xGA_total=v;hR.xGA=v;} if(m.id==='mf_axga'){aR.team_xGA_total=v;aR.xGA=v;}
+    if(m.id==='mf_hs'){hR.team_goals_total=v;} if(m.id==='mf_as'){aR.team_goals_total=v;}
   });
+  if(!hR.team_name)hR.team_name=d.ht; if(!aR.team_name)aR.team_name=d.at;
+  if(!hR.team_xG_total)hR.team_xG_total=d.hxg; if(!aR.team_xG_total)aR.team_xG_total=d.axg;
   window._lastHomeRaw=hR;window._lastAwayRaw=aR;
   var newD=buildMatchData(hR,aR,d.ht,d.at,d.odds||{});
   window._lastMatchData=newD;window._mfData=null;
@@ -1400,7 +1426,6 @@ function buildMatchData(hm,am,hn,an,odds,absentHome,absentAway){
     var xg90 = s.xG90 ? parseFloat(s.xG90) : 0;
     if(!xg90 && s.xG && s.apps) xg90 = parseFloat(s.xG) / parseFloat(s.apps);
     if(!xg90 && s.xG && s.matches_played) xg90 = parseFloat(s.xG) / parseFloat(s.matches_played);
-    // P(marquer) = 1 - e^(-xG90), plafond 52%
     return xg90 > 0 ? Math.min(Math.round((1 - Math.exp(-xg90)) * 100), 52) : 0;
   }
   function scorerEdge(pct, cote){
@@ -2362,6 +2387,7 @@ function updateDayBtn(){
 
 async function loadDayTeamFiles(files, side){
   var statusId = side==='home' ? 'dayHomeStatus' : 'dayAwayStatus';
+  var btnId = side==='home' ? 'dayHomeSsBtn' : 'dayAwaySsBtn';
   var status=document.getElementById(statusId);
   if(status){ status.textContent='Analyse '+files.length+' screenshot(s)...'; status.style.color='var(--ac)'; }
   var results=[];
@@ -2375,7 +2401,7 @@ async function loadDayTeamFiles(files, side){
   }
   if(side==='home') _dayHomeData=results;
   else _dayAwayData=results;
-  // Associer les données aux matchs
+  // Associate data with matches
   _dayMatches_list.forEach(function(m){
     var hd=findTeamData(m.ht);
     var ad=findTeamData(m.at);
@@ -2384,24 +2410,11 @@ async function loadDayTeamFiles(files, side){
   });
   var names=results.map(function(r){return r._name;}).join(', ');
   if(status){ status.textContent=results.length+' equipe(s): '+names; status.style.color='var(--gr)'; }
-  // Re-render checkboxes
+  var btn=document.getElementById(btnId);
+  if(btn&&results.length){ btn.style.borderColor='rgba(34,211,165,.4)'; btn.style.color='var(--gr)'; }
+  // Re-render checkboxes with updated data status
   if(_dayMatches_list.length) renderDayMatchCheckboxes();
-  // Analyser automatiquement les matchs qui ont maintenant leurs 2 équipes
-  autoAnalyzeReadyMatches();
-}
-
-function autoAnalyzeReadyMatches(){
-  // Analyser tous les matchs qui ont homeData ET awayData
-  var readyMatches=_dayMatches_list.filter(function(m){ return m.homeData&&m.awayData; });
-  if(!readyMatches.length) return;
-  var matches=[];
-  readyMatches.forEach(function(m){
-    var d=buildMatchData(m.homeData,m.awayData,m.ht,m.at,{});
-    d._matchKey=m.ht+'_'+m.at;
-    matches.push(d);
-  });
-  window._dayMatches=matches;
-  renderDayResults(matches);
+  updateDayBtn();
 }
 
 
@@ -2714,7 +2727,12 @@ function renderTracker(){
 // JOURNEE COMPLETE
 // ================================================================
 var dayHomeData=[], dayAwayData=[];
-// Listeners geres par DOMContentLoaded
+document.getElementById('dayHomeInput').addEventListener('change',function(){
+  if(this.files&&this.files.length) loadDayFiles(Array.from(this.files),'home');
+});
+document.getElementById('dayAwayInput').addEventListener('change',function(){
+  if(this.files&&this.files.length) loadDayFiles(Array.from(this.files),'away');
+});
 
 async function loadDayFiles(files,side){
   var lbl='day'+(side==='home'?'Home':'Away')+'Status';
