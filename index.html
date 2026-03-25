@@ -900,11 +900,44 @@ function toB64(file){
   });
 }
 
+var _PROMPTS={
+  understat:'Analyse ce screenshot Understat football. IMPORTANT: extrait TOUTES les valeurs numeriques visibles. Retourne UNIQUEMENT un JSON valide sans markdown:\n{\n  "team_name":"Arsenal",\n  "team_xG_total":47.65,\n  "team_xGA_total":28.12,\n  "team_goals_total":58,\n  "matches_played":29,\n  "top_scorers":[{"name":"Joueur","goals":15,"xG":12.5,"apps":25,"xG90":0.47}]\n}\nLe champ team_xGA_total est OBLIGATOIRE - cherche la valeur xGA dans le tableau. Ne laisse aucun champ a null si la valeur est visible.',
+  calendar:'Analyse ce calendrier football. Retourne UNIQUEMENT: {"fixtures":[{"home":"Equipe DOM","away":"Equipe EXT","time":"heure ou vide"}]}',
+  standings:'Analyse ce classement. Retourne UNIQUEMENT: {"league":"nom","teams":[{"rank":1,"name":"Equipe","played":20,"wins":12,"draws":4,"losses":4,"gf":35,"ga":18,"gd":17,"points":40,"form":"WWDLW"}]}',
+  topscorers:'Analyse ces buteurs. Retourne UNIQUEMENT: {"league":"nom","players":[{"rank":1,"name":"Joueur","team":"Equipe","goals":15,"xG":12.5,"apps":20}]}',
+  'lineup-home':'Analyse compo domicile. Retourne UNIQUEMENT: {"team":"nom","formation":"4-3-3","players":[{"name":"Nom","position":"GK"}]}',
+  'lineup-away':'Analyse compo exterieur. Retourne UNIQUEMENT: {"team":"nom","formation":"4-3-3","players":[{"name":"Nom","position":"GK"}]}',
+  'lastgames-home':'Analyse derniers matchs equipe domicile. Retourne UNIQUEMENT: {"team":"nom","matches":[{"date":"","opponent":"","home_away":"H","goals":2,"goals_against":1,"xG":1.8,"xGA":0.9,"result":"W"}]}',
+  'lastgames-away':'Analyse derniers matchs equipe exterieur. Retourne UNIQUEMENT: {"team":"nom","matches":[{"date":"","opponent":"","home_away":"A","goals":2,"goals_against":1,"xG":1.8,"xGA":0.9,"result":"W"}]}',
+  h2h:'Analyse historique H2H. Retourne UNIQUEMENT: {"matches":[{"date":"","home":"","away":"","homeGoals":2,"awayGoals":1}]}'
+};
+
 async function callAPI(b64,mt,hint){
-  var resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:mt,hint:hint})});
-  var data=await resp.json();
-  if(data.error) throw new Error(data.error);
-  return data;
+  var prompt=_PROMPTS[hint]||_PROMPTS.understat;
+  // Essayer Anthropic en premier
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:mt||'image/png',data:b64}},
+        {type:'text',text:prompt}
+      ]}]})
+    });
+    var raw=await resp.json();
+    if(raw.error) throw new Error(raw.error.message||JSON.stringify(raw.error));
+    var text=(raw.content||[]).map(function(x){return x.type==='text'?x.text:'';}).join('');
+    text=text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    try{return JSON.parse(text);}catch(e){var m=text.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error('JSON invalide');}
+  }catch(err){
+    // Fallback backend
+    try{
+      var r2=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:b64,mediaType:mt,hint:hint})});
+      var d2=await r2.json();
+      if(d2.error)throw new Error(d2.error);
+      return d2;
+    }catch(e2){throw err;}
+  }
 }
 
 async function handleCtx(files,type,idx){
@@ -1332,18 +1365,43 @@ function buildMatchData(hm,am,hn,an,odds,absentHome,absentAway){
         if(!xg90 && p.xG && p.apps) xg90 = parseFloat(p.xG) / parseFloat(p.apps);
         // Convert xG90 to % probability of scoring in ONE match
         // xG90=0.42 means 42% chance per 90min match
-        var pct2 = xg90 > 0 ? Math.min(Math.round((1 - Math.exp(-xg90)) * 100), 52) : 0;
+        var pct2 = xg90 > 0 ? calcScorePct(p,d) : 0;
         if(pt.includes(htf2))d.lgScorers.push(Object.assign({},p,{_sd:'h',score_probability:pct2}));
         if(pt.includes(atf2))d.lgScorers.push(Object.assign({},p,{_sd:'a',score_probability:pct2}));
       });
     }
   });
   // Build scorers list
-  function calcScorePct(s){
-    var xg90 = s.xG90 ? parseFloat(s.xG90) : 0;
-    if(!xg90 && s.xG && s.apps) xg90 = parseFloat(s.xG) / parseFloat(s.apps);
-    if(!xg90 && s.xG && s.matches_played) xg90 = parseFloat(s.xG) / parseFloat(s.matches_played);
-    return xg90 > 0 ? Math.min(Math.round((1 - Math.exp(-xg90)) * 100), 52) : 0;
+  function calcScorePct(s,d){
+    // xG90 du joueur
+    var xg90=s.xG90?parseFloat(s.xG90):0;
+    if(!xg90&&s.xG&&s.apps) xg90=parseFloat(s.xG)/parseFloat(s.apps);
+    if(!xg90&&s.xG&&s.matches_played) xg90=parseFloat(s.xG)/parseFloat(s.matches_played);
+    if(xg90<=0) return 0;
+    // Etape 1: lambda de base (90 min titulaire)
+    var minutes=s.starter===false?55:85; // remplacant=55min, titulaire=85min
+    var lam=xg90*(minutes/90);
+    // Etape 2: ajustements contextuels
+    if(s.starter===false) lam*=0.6; // remplacant
+    if(s.penalty_taker) lam+=0.15; // tireur penalty
+    // Force offensive equipe (via xG/match de l equipe)
+    if(d){
+      var side=s._sd==='h'?'h':'a';
+      var teamXg=side==='h'?(d.hxg||0):(d.axg||0);
+      var teamMatches=side==='h'?(d.hMatchesPlayed||29):(d.aMatchesPlayed||29);
+      var teamXgPm=teamMatches>0?teamXg/teamMatches:1.45;
+      if(teamXgPm>1.8) lam*=1.1; // equipe forte
+      else if(teamXgPm<1.1) lam*=0.9; // equipe faible
+      // Faiblesse defensive adverse (xGA adverse)
+      var oppXga=side==='h'?(d.axga||0):(d.hxga||0);
+      var oppXgaPm=teamMatches>0?oppXga/teamMatches:1.2;
+      if(oppXgaPm>1.6) lam*=1.15; // defense tres faible
+      else if(oppXgaPm<0.9) lam*=0.9; // defense solide
+    }
+    // Etape 3: Poisson P(but>=1) = 1 - e^(-lambda)
+    var prob=Math.round((1-Math.exp(-lam))*100);
+    // Plafond realiste: max 62% (eviter valeurs absurdes)
+    return Math.min(prob,62);
   }
   function scorerEdge(pct, cote){
     if(!cote||!pct) return null;
@@ -1359,11 +1417,11 @@ function buildMatchData(hm,am,hn,an,odds,absentHome,absentAway){
 
   var hs=(hm?hm.top_scorers||[]:[]).map(function(s){
     var pct=calcScorePct(s);
-    return Object.assign({},s,{_sd:'h',score_probability:pct||s.score_probability||0});
+    var pct2c=calcScorePct(s,d);return Object.assign({},s,{_sd:'h',score_probability:pct2c||pct||s.score_probability||0});
   });
   var as2=(am?am.top_scorers||[]:[]).map(function(s){
     var pct=calcScorePct(s);
-    return Object.assign({},s,{_sd:'a',score_probability:pct||s.score_probability||0});
+    var pct2d=calcScorePct(s,d);return Object.assign({},s,{_sd:'a',score_probability:pct2d||pct||s.score_probability||0});
   });
   var sm={};
   hs.concat(as2).concat(d.lgScorers||[]).concat(uploadedHome).concat(uploadedAway).forEach(function(s){
@@ -1793,10 +1851,13 @@ function renderScorers(d,mode){
   if(scorers.length){
     scorers.forEach(function(s,i){
       var pct=Math.min(Math.round(s.score_probability||0),99);
+      // Cote equivalente (1/P)
+      var coteEq=pct>0?Math.round((100/pct)*100)/100:null;
       var cls=pct>=50?'hc':pct>=25?'mc2':'lc';
       var fcls=pct>=50?'fh':pct>=25?'fm':'fl';
       var rk=i===0?'r1':i===1?'r2':i===2?'r3':'rx';
       var xgv=s.xG?(typeof s.xG.toFixed==='function'?s.xG.toFixed(2):String(s.xG)):'-';
+      var coteTxt=coteEq?' | cote equiv. '+coteEq:'';
       var sbd=s._sd==='h'?('<span class="tbdg hbdg">'+d.ht+'</span>'):('<span class="tbdg abdg">'+d.at+'</span>');
       if(s._setPiece) sbd+='<span class="tbdg" style="background:rgba(245,158,11,.15);color:var(--gd);font-size:9px;">CPA+</span>';
       var scEdgeHtml='';
@@ -1817,7 +1878,7 @@ function renderScorers(d,mode){
         +'<div style="flex:1">'
         +'<div class="scnm">'+(s.name||'-')+' '+sbd+formBadge+'</div>'
         +'<div class="scsb">'+(s.goals||0)+' buts - xG '+xgv+' - '+(s.apps||0)+' matchs'
-        +(pct>0?' - xG90: '+(s.xG90?parseFloat(s.xG90).toFixed(2):'-'):'')+'</div>'
+        +(pct>0?' - xG90: '+(s.xG90?parseFloat(s.xG90).toFixed(2):'-')+(coteTxt?coteTxt:''):'')+'</div>'
         +'<div style="display:flex;align-items:center;gap:6px;margin-top:5px;">'
         +'<input id="scote'+i+'" type="number" step="0.01" min="1" placeholder="cote anytime" '
         +'style="width:120px;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:4px 8px;color:var(--gd);font-size:11px;font-family:DM Mono,monospace;outline:none;" '
