@@ -215,21 +215,7 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
 </div>
 
 <!-- MEM BAR -->
-<div id="apiKeyBanner" style="background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.25);border-radius:12px;padding:12px 16px;margin-bottom:12px;">
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-    <span style="font-family:DM Mono,monospace;font-size:10px;color:var(--ac2);letter-spacing:2px;">CLE API ANTHROPIC</span>
-    <span id="apiStatus" style="font-family:DM Mono,monospace;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,77,109,.15);color:var(--rd);">Non configuree</span>
-  </div>
-  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-    <input id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." 
-      style="flex:1;min-width:200px;background:var(--sf2);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:8px 12px;color:var(--tx);font-family:DM Mono,monospace;font-size:12px;outline:none;"
-      oninput="ANTHROPIC_KEY=this.value.trim();updateApiStatus()">
-    <button type="button" id="btnSaveKey"
-      style="padding:8px 16px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:8px;color:#fff;font-family:DM Mono,monospace;font-size:11px;cursor:pointer;white-space:nowrap;"
-      onclick="saveApiKey()">Sauvegarder</button>
-  </div>
-  <div id="apiSaveMsg" style="font-family:DM Mono,monospace;font-size:10px;margin-top:6px;display:none;"></div>
-</div>
+
 <div class="mem" id="memBar">
   <span class="mt-lbl">Memoire :</span>
   <span class="mc empty" id="memHX">xG DOM</span>
@@ -429,6 +415,7 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
   <div class="pgw" id="pgw"><div class="pgt"><div class="pgf" id="pgf"></div></div><div class="pgl" id="pgl">...</div></div>
   <div class="err" id="errmatch"></div>
   </div><!-- end matchPanel -->
+  <div id="missingFormContainer" style="display:none;margin-bottom:12px;"></div>
   <div class="rep" id="rep">
     <div class="mhdr fin" id="mhdr"></div>
     <div class="tcols fin" id="tcols"></div>
@@ -1357,11 +1344,12 @@ async function doAnalyze(){
 function setProg(pct,lbl){document.getElementById('pgf').style.width=pct+'%';document.getElementById('pgl').textContent=lbl;}
 
 function showMissingForm(missing,d,hn,an,odds,abH,abA){
-  var rep=document.getElementById('rep');
-  rep.style.display='block';
-  var html='<div style="background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.35);border-radius:14px;padding:20px;margin-bottom:14px;">';
+  var container=document.getElementById('missingFormContainer');
+  if(!container)return;
+  container.style.display='block';
+  var html='<div style="background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.35);border-radius:14px;padding:20px;">';
   html+='<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--rd);letter-spacing:2px;margin-bottom:10px;">DONNEES MANQUANTES - SAISIE REQUISE</div>';
-  html+='<div style="font-size:12px;color:var(--mt);margin-bottom:14px;">Claude na pas pu extraire ces valeurs. Saisis-les pour lancer analyse :</div>';
+  html+='<div style="font-size:12px;color:var(--mt);margin-bottom:14px;">Valeurs non lues depuis le screenshot. Entre-les pour lancer analyse :</div>';
   html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:14px;">';
   missing.forEach(function(m){
     var col=m.side==='h'?'var(--bl)':'var(--or)';
@@ -1377,7 +1365,7 @@ function showMissingForm(missing,d,hn,an,odds,abH,abA){
     +'style="width:100%;padding:11px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);border-radius:10px;color:#9ca3af;font-family:DM Mono,monospace;font-size:12px;letter-spacing:2px;cursor:not-allowed;transition:all .2s;">'
     +'REMPLIS TOUS LES CHAMPS POUR ANALYSER</button>';
   html+='</div>';
-  rep.innerHTML=html;
+  container.innerHTML=html;
   window._mfData={missing:missing,d:d,hn:hn,an:an,odds:odds,abH:abH,abA:abA};
 }
 
@@ -1411,12 +1399,11 @@ async function submitMF(){
   window._lastHomeRaw=hR;window._lastAwayRaw=aR;
   var newD=buildMatchData(hR,aR,p.hn,p.an,p.odds,p.abH,p.abA);
   window._lastMatchData=newD;window._mfData=null;
-  try{
-    var _t=new Promise(function(_,r){setTimeout(function(){r(new Error('to'));},8000);});
-    var _f=fetch('/api/tipster',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({matchData:{ht:newD.ht,at:newD.at,hxg:newD.hxg,axg:newD.axg,hxga:newD.hxga,axga:newD.axga,bets:newD.bets}})}).then(function(r){return r.json();});
-    var td=await Promise.race([_f,_t]);
-    if(td&&td.analysis)newD._tipsterAnalysis=td.analysis;else newD._tipsterAnalysis=buildLocalTipster(newD);
-  }catch(e){newD._tipsterAnalysis=buildLocalTipster(newD);}
+  // Cacher le formulaire avant de rendre le rapport
+  var mfc=document.getElementById('missingFormContainer');
+  if(mfc){mfc.style.display='none';mfc.innerHTML='';}
+  // Analyse tipster locale (pas d API)
+  newD._tipsterAnalysis=buildLocalTipster(newD);
   renderReport(newD);
 }
 
