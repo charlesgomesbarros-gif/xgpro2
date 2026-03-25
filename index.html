@@ -215,13 +215,20 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
 </div>
 
 <!-- MEM BAR -->
-<div id="apiKeyBanner" style="background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.25);border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-  <span style="font-family:DM Mono,monospace;font-size:10px;color:var(--rd);letter-spacing:1px;">CLE ANTHROPIC</span>
-  <input id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." 
-    style="flex:1;min-width:200px;background:var(--sf2);border:1px solid rgba(255,77,109,.3);border-radius:7px;padding:6px 10px;color:var(--tx);font-family:DM Mono,monospace;font-size:12px;outline:none;"
-    oninput="ANTHROPIC_KEY=this.value;updateApiStatus()">
-  <span id="apiStatus" style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);">Non configuree</span>
-  <button onclick="saveApiKey()" style="padding:5px 12px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:7px;color:#fff;font-family:DM Mono,monospace;font-size:10px;cursor:pointer;">Sauvegarder</button>
+<div id="apiKeyBanner" style="background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.25);border-radius:12px;padding:12px 16px;margin-bottom:12px;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <span style="font-family:DM Mono,monospace;font-size:10px;color:var(--ac2);letter-spacing:2px;">CLE API ANTHROPIC</span>
+    <span id="apiStatus" style="font-family:DM Mono,monospace;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,77,109,.15);color:var(--rd);">Non configuree</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <input id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." 
+      style="flex:1;min-width:200px;background:var(--sf2);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:8px 12px;color:var(--tx);font-family:DM Mono,monospace;font-size:12px;outline:none;"
+      oninput="ANTHROPIC_KEY=this.value.trim();updateApiStatus()">
+    <button type="button" id="btnSaveKey"
+      style="padding:8px 16px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:8px;color:#fff;font-family:DM Mono,monospace;font-size:11px;cursor:pointer;white-space:nowrap;"
+      onclick="saveApiKey()">Sauvegarder</button>
+  </div>
+  <div id="apiSaveMsg" style="font-family:DM Mono,monospace;font-size:10px;margin-top:6px;display:none;"></div>
 </div>
 <div class="mem" id="memBar">
   <span class="mt-lbl">Memoire :</span>
@@ -660,19 +667,41 @@ try{var _savedKey=localStorage.getItem('xg_anthropic_key');if(_savedKey){ANTHROP
 
 function updateApiStatus(){
   var st=document.getElementById('apiStatus');
+  var banner=document.getElementById('apiKeyBanner');
   if(!st)return;
-  if(ANTHROPIC_KEY&&ANTHROPIC_KEY.startsWith('sk-ant-')){
-    st.textContent='Cle valide';st.style.color='var(--gr)';
-    var b=document.getElementById('apiKeyBanner');
-    if(b)b.style.borderColor='rgba(34,211,165,.25)';
-  } else if(ANTHROPIC_KEY){
-    st.textContent='Format invalide';st.style.color='var(--gd)';
+  var key=ANTHROPIC_KEY||'';
+  // Accepter tout format sk-ant- ou sk-
+  var valid=key.length>20&&(key.startsWith('sk-ant-')||key.startsWith('sk-'));
+  if(valid){
+    st.textContent='Cle valide';
+    st.style.background='rgba(34,211,165,.15)';st.style.color='var(--gr)';
+    if(banner)banner.style.borderColor='rgba(34,211,165,.3)';
+  } else if(key.length>0){
+    st.textContent='Cle incomplete';
+    st.style.background='rgba(245,158,11,.15)';st.style.color='var(--gd)';
+    if(banner)banner.style.borderColor='rgba(245,158,11,.3)';
   } else {
-    st.textContent='Non configuree';st.style.color='var(--rd)';
+    st.textContent='Non configuree';
+    st.style.background='rgba(255,77,109,.15)';st.style.color='var(--rd)';
+    if(banner)banner.style.borderColor='rgba(255,77,109,.25)';
   }
 }
 function saveApiKey(){
-  try{localStorage.setItem('xg_anthropic_key',ANTHROPIC_KEY);}catch(e){}
+  var key=(document.getElementById('apiKeyInput')||{}).value||'';
+  ANTHROPIC_KEY=key.trim();
+  var msg=document.getElementById('apiSaveMsg');
+  var btn=document.getElementById('btnSaveKey');
+  try{
+    localStorage.setItem('xg_anthropic_key',ANTHROPIC_KEY);
+    if(msg){msg.textContent='Cle sauvegardee dans le navigateur';msg.style.color='var(--gr)';msg.style.display='block';}
+    if(btn){btn.textContent='Sauvegarde !';btn.style.background='rgba(34,211,165,.3)';}
+    setTimeout(function(){
+      if(btn){btn.textContent='Sauvegarder';btn.style.background='linear-gradient(135deg,var(--ac2),#5b21b6)';}
+      if(msg)msg.style.display='none';
+    },3000);
+  }catch(e){
+    if(msg){msg.textContent='Erreur: '+e.message;msg.style.color='var(--rd)';msg.style.display='block';}
+  }
   updateApiStatus();
 }
 
