@@ -215,6 +215,14 @@ h1{font-family:Bebas Neue,sans-serif;font-size:clamp(40px,7vw,76px);letter-spaci
 </div>
 
 <!-- MEM BAR -->
+<div id="apiKeyBanner" style="background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.25);border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+  <span style="font-family:DM Mono,monospace;font-size:10px;color:var(--rd);letter-spacing:1px;">CLE ANTHROPIC</span>
+  <input id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." 
+    style="flex:1;min-width:200px;background:var(--sf2);border:1px solid rgba(255,77,109,.3);border-radius:7px;padding:6px 10px;color:var(--tx);font-family:DM Mono,monospace;font-size:12px;outline:none;"
+    oninput="ANTHROPIC_KEY=this.value;updateApiStatus()">
+  <span id="apiStatus" style="font-family:DM Mono,monospace;font-size:10px;color:var(--mt);">Non configuree</span>
+  <button onclick="saveApiKey()" style="padding:5px 12px;background:linear-gradient(135deg,var(--ac2),#5b21b6);border:none;border-radius:7px;color:#fff;font-family:DM Mono,monospace;font-size:10px;cursor:pointer;">Sauvegarder</button>
+</div>
 <div class="mem" id="memBar">
   <span class="mt-lbl">Memoire :</span>
   <span class="mc empty" id="memHX">xG DOM</span>
@@ -644,6 +652,29 @@ if(!MEM.match.scorersHome) MEM.match.scorersHome=null;
 if(!MEM.match.scorersAway) MEM.match.scorersAway=null;
 var ctxLeague = 'EPL';
 var homeFiles=[], awayFiles=[];
+// Clé Anthropic - à remplir avec ta clé sk-ant-...
+var ANTHROPIC_KEY = '';
+// Si pas de clé -> saisie manuelle automatique
+// Restaurer la clé depuis localStorage au chargement
+try{var _savedKey=localStorage.getItem('xg_anthropic_key');if(_savedKey){ANTHROPIC_KEY=_savedKey;}}catch(e){}
+
+function updateApiStatus(){
+  var st=document.getElementById('apiStatus');
+  if(!st)return;
+  if(ANTHROPIC_KEY&&ANTHROPIC_KEY.startsWith('sk-ant-')){
+    st.textContent='Cle valide';st.style.color='var(--gr)';
+    var b=document.getElementById('apiKeyBanner');
+    if(b)b.style.borderColor='rgba(34,211,165,.25)';
+  } else if(ANTHROPIC_KEY){
+    st.textContent='Format invalide';st.style.color='var(--gd)';
+  } else {
+    st.textContent='Non configuree';st.style.color='var(--rd)';
+  }
+}
+function saveApiKey(){
+  try{localStorage.setItem('xg_anthropic_key',ANTHROPIC_KEY);}catch(e){}
+  updateApiStatus();
+}
 
 // Auto-render saved data on page load
 window.addEventListener('load', function(){
@@ -901,7 +932,7 @@ function toB64(file){
 }
 
 var _PROMPTS={
-  understat:'Analyse ce screenshot Understat football. IMPORTANT: extrait TOUTES les valeurs numeriques visibles. Retourne UNIQUEMENT un JSON valide sans markdown:\n{\n  "team_name":"Arsenal",\n  "team_xG_total":47.65,\n  "team_xGA_total":28.12,\n  "team_goals_total":58,\n  "matches_played":29,\n  "top_scorers":[{"name":"Joueur","goals":15,"xG":12.5,"apps":25,"xG90":0.47}]\n}\nLe champ team_xGA_total est OBLIGATOIRE - cherche la valeur xGA dans le tableau. Ne laisse aucun champ a null si la valeur est visible.',
+  understat:'Analyse ce screenshot Understat football. OBLIGATOIRE: extrait team_xG_total (xG), team_xGA_total (xGA) et team_goals_total (Buts) qui sont toujours visibles dans le tableau. Retourne UNIQUEMENT un JSON valide sans markdown:\n{\n  "team_name":"Arsenal",\n  "team_xG_total":47.65,\n  "team_xGA_total":28.12,\n  "team_goals_total":58,\n  "matches_played":29,\n  "top_scorers":[{"name":"Joueur","goals":15,"xG":12.5,"apps":25,"xG90":0.47}]\n}\nCes 3 champs sont TOUJOURS presents sur Understat. Ne jamais retourner null pour xG, xGA ou Buts si une valeur est visible. team_xGA_total est OBLIGATOIRE - cherche la valeur xGA dans le tableau. Ne laisse aucun champ a null si la valeur est visible.',
   calendar:'Analyse ce calendrier football. Retourne UNIQUEMENT: {"fixtures":[{"home":"Equipe DOM","away":"Equipe EXT","time":"heure ou vide"}]}',
   standings:'Analyse ce classement. Retourne UNIQUEMENT: {"league":"nom","teams":[{"rank":1,"name":"Equipe","played":20,"wins":12,"draws":4,"losses":4,"gf":35,"ga":18,"gd":17,"points":40,"form":"WWDLW"}]}',
   topscorers:'Analyse ces buteurs. Retourne UNIQUEMENT: {"league":"nom","players":[{"rank":1,"name":"Joueur","team":"Equipe","goals":15,"xG":12.5,"apps":20}]}',
@@ -918,7 +949,7 @@ async function callAPI(b64,mt,hint){
   try{
     var resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':ANTHROPIC_KEY},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,messages:[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:mt||'image/png',data:b64}},
         {type:'text',text:prompt}
@@ -1238,12 +1269,22 @@ async function doAnalyze(){
     window._lastHomeRaw=hm?JSON.parse(JSON.stringify(hm)):null;
     window._lastAwayRaw=am?JSON.parse(JSON.stringify(am)):null;
     var d=buildMatchData(hm,am,hn,an,odds,absentHome,absentAway);
-    setProg(100,'Termine !');
-    await new Promise(function(r){setTimeout(r,200);});
     document.getElementById('pgw').style.display='none';
     document.getElementById('bana').disabled=false;
+    // Verifier champs manquants
+    var _miss=[];
+    if(homeFiles.length>0){
+      if(d.hxg==null)  _miss.push({team:d.ht,side:'h',field:'xG',id:'mf_hxg'});
+      if(d.hxga==null) _miss.push({team:d.ht,side:'h',field:'xGA',id:'mf_hxga'});
+      if(d.hs==null)   _miss.push({team:d.ht,side:'h',field:'Buts',id:'mf_hs'});
+    }
+    if(awayFiles.length>0){
+      if(d.axg==null)  _miss.push({team:d.at,side:'a',field:'xG',id:'mf_axg'});
+      if(d.axga==null) _miss.push({team:d.at,side:'a',field:'xGA',id:'mf_axga'});
+      if(d.as==null)   _miss.push({team:d.at,side:'a',field:'Buts',id:'mf_as'});
+    }
+    if(_miss.length){ showMissingForm(_miss,d,hn,an,odds,absentHome,absentAway); return; }
     window._lastMatchData=d;
-    // Call tipster API here, then render
     setProg(95,'Analyse tipster IA...');
     try {
       var _tTO=new Promise(function(_,r){setTimeout(function(){r(new Error('to'));},8000);});
@@ -1274,6 +1315,70 @@ async function doAnalyze(){
 }
 
 function setProg(pct,lbl){document.getElementById('pgf').style.width=pct+'%';document.getElementById('pgl').textContent=lbl;}
+
+function showMissingForm(missing,d,hn,an,odds,abH,abA){
+  var rep=document.getElementById('rep');
+  rep.style.display='block';
+  var html='<div style="background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.35);border-radius:14px;padding:20px;margin-bottom:14px;">';
+  html+='<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--rd);letter-spacing:2px;margin-bottom:10px;">DONNEES MANQUANTES - SAISIE REQUISE</div>';
+  html+='<div style="font-size:12px;color:var(--mt);margin-bottom:14px;">Claude na pas pu extraire ces valeurs. Saisis-les pour lancer analyse :</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:14px;">';
+  missing.forEach(function(m){
+    var col=m.side==='h'?'var(--bl)':'var(--or)';
+    html+='<div style="background:var(--sf2);border-radius:10px;padding:10px;">'
+      +'<div style="font-family:DM Mono,monospace;font-size:10px;color:'+col+';margin-bottom:5px;letter-spacing:1px;">'+m.field+' - '+m.team+'</div>'
+      +'<input id="'+m.id+'" type="number" step="0.01" min="0" placeholder="ex: 38.5" '
+      +'style="width:100%;background:var(--sf);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:7px 9px;color:var(--tx);font-family:DM Mono,monospace;font-size:13px;outline:none;" '
+      +'oninput="checkMF()">'
+      +'</div>';
+  });
+  html+='</div>';
+  html+='<button id="btnMF" onclick="submitMF()" disabled '
+    +'style="width:100%;padding:11px;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);border-radius:10px;color:#9ca3af;font-family:DM Mono,monospace;font-size:12px;letter-spacing:2px;cursor:not-allowed;transition:all .2s;">'
+    +'REMPLIS TOUS LES CHAMPS POUR ANALYSER</button>';
+  html+='</div>';
+  rep.innerHTML=html;
+  window._mfData={missing:missing,d:d,hn:hn,an:an,odds:odds,abH:abH,abA:abA};
+}
+
+function checkMF(){
+  if(!window._mfData)return;
+  var ok=window._mfData.missing.every(function(m){var e=document.getElementById(m.id);return e&&e.value&&parseFloat(e.value)>0;});
+  var btn=document.getElementById('btnMF');if(!btn)return;
+  btn.disabled=!ok;
+  btn.style.background=ok?'linear-gradient(135deg,var(--ac2),#5b21b6)':'rgba(124,58,237,.2)';
+  btn.style.color=ok?'#fff':'#9ca3af';
+  btn.style.cursor=ok?'pointer':'not-allowed';
+  btn.textContent=ok?'LANCER ANALYSE COMPLETE':'REMPLIS TOUS LES CHAMPS POUR ANALYSER';
+}
+
+async function submitMF(){
+  if(!window._mfData)return;
+  var p=window._mfData,d=p.d;
+  var hR=window._lastHomeRaw||{team_name:d.ht};
+  var aR=window._lastAwayRaw||{team_name:d.at};
+  p.missing.forEach(function(m){
+    var v=parseFloat(document.getElementById(m.id).value);
+    if(m.id==='mf_hxg'){hR.team_xG_total=v;}
+    if(m.id==='mf_axg'){aR.team_xG_total=v;}
+    if(m.id==='mf_hxga'){hR.team_xGA_total=v;hR.xGA=v;}
+    if(m.id==='mf_axga'){aR.team_xGA_total=v;aR.xGA=v;}
+    if(m.id==='mf_hs'){hR.team_goals_total=v;}
+    if(m.id==='mf_as'){aR.team_goals_total=v;}
+  });
+  if(!hR.team_name)hR.team_name=p.hn||d.ht;
+  if(!aR.team_name)aR.team_name=p.an||d.at;
+  window._lastHomeRaw=hR;window._lastAwayRaw=aR;
+  var newD=buildMatchData(hR,aR,p.hn,p.an,p.odds,p.abH,p.abA);
+  window._lastMatchData=newD;window._mfData=null;
+  try{
+    var _t=new Promise(function(_,r){setTimeout(function(){r(new Error('to'));},8000);});
+    var _f=fetch('/api/tipster',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({matchData:{ht:newD.ht,at:newD.at,hxg:newD.hxg,axg:newD.axg,hxga:newD.hxga,axga:newD.axga,bets:newD.bets}})}).then(function(r){return r.json();});
+    var td=await Promise.race([_f,_t]);
+    if(td&&td.analysis)newD._tipsterAnalysis=td.analysis;else newD._tipsterAnalysis=buildLocalTipster(newD);
+  }catch(e){newD._tipsterAnalysis=buildLocalTipster(newD);}
+  renderReport(newD);
+}
 
 function buildLocalTipster(d){
   var b=d.bets||{};
@@ -2776,6 +2881,16 @@ function loadDayMatch(idx){
 // INIT
 // ================================================================
 window.addEventListener('load',function(){
+  // Restaurer la clé API dans le champ
+  try{
+    var saved=localStorage.getItem('xg_anthropic_key');
+    if(saved){
+      ANTHROPIC_KEY=saved;
+      var inp=document.getElementById('apiKeyInput');
+      if(inp)inp.value=saved;
+      updateApiStatus();
+    }
+  }catch(e){}
   renderHistory();
   renderTracker();
   // Restore absents if team names already filled
